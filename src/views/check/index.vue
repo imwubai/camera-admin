@@ -30,7 +30,7 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="相似度：">
-            <el-input v-model="form.like" placeholder="请输入" />
+            <el-input v-model="form.similarity" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
@@ -59,7 +59,7 @@
         </el-col>
         <el-col :span="3">
           <el-form-item label="有无车牌：">
-            <el-checkbox v-model="form.checked" />
+            <el-checkbox v-model="form.licensePlateStatus" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
@@ -83,14 +83,26 @@
         </template>
       </el-table-column>
       <el-table-column type="index" label="序号" width="150" />
-      <el-table-column prop="createdat" label="采集时间" width="150" />
-      <el-table-column prop="place" label="违法地点" width="150" />
-      <el-table-column prop="ruletype" label="违法类型" width="150" />
-      <el-table-column prop="name3" label="相似度" width="150" />
-      <el-table-column prop="status" label="审核状态" width="150" />
-      <el-table-column prop="facestatus" label="当事人处理结果" width="150" />
-      <el-table-column prop="updatedat" label="审核时间" width="150" />
-      <el-table-column prop="rulename" label="审核人" width="150" />
+      <el-table-column prop="createdAt" label="采集时间" width="150" />
+      <el-table-column prop="rulePlace" label="违法地点" width="150" />
+      <el-table-column prop="ruleType" label="违法类型" width="150">
+        <template slot-scope="scope">
+          {{ ruleTypeMap.get(scope.row.ruleType) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="similarity" label="相似度" width="150" />
+      <el-table-column prop="verifyedStatus" label="审核状态" width="150">
+        <template slot-scope="scope">
+          {{ scope.row.verifyedStatus ? verifyedStatusMap.get(scope.row.verifyedStatus) : '' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="当事人处理结果" width="150">
+        <template slot-scope="scope">
+          {{ scope.row.handledStatus ? handledStatusMap.get(scope.row.handledStatus) : '' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="verifyedAt" label="审核时间" width="150" />
+      <el-table-column prop="verifyedName" label="审核人" width="150" />
     </el-table>
     <div class="table_pagination">
       <el-pagination
@@ -248,30 +260,31 @@
 </template>
 
 <script>
+import moment from 'moment'
 import axios from '@/utils/request'
 
 export default {
   data() {
     return {
       ruleTypeMap: new Map([
-        ['', '全部'],
+        [0, '全部'],
         [1, '闯红灯'],
         [2, '越线'],
-        [3, '逆行'],
-        [4, '一车多人'],
+        [6, '逆行'],
+        [3, '一车多人'],
         [5, '无头盔'],
-        [6, '安装伞具']
+        [4, '安装伞具']
       ]),
       verifyedStatusMap: new Map([
-        [undefined, '全部'],
+        [0, '全部'],
         [1, '未审核'],
         [2, '已审核'],
         [3, '已作废']
       ]),
       handledStatusMap: new Map([
-        [undefined, '全部'],
-        [1, '已处理'],
-        [2, '未处理'],
+        [0, '全部'],
+        [1, '未处理'],
+        [2, '已处理'],
         [3, '无需处理']
       ]),
       travelWayMap: new Map([
@@ -358,7 +371,9 @@ export default {
       count3: 0,
       form: {
         ruleType: '',
-        verifyedStatus: 1
+        verifyedStatus: 1,
+        handledStatus: 0,
+        licensePlateStatus: false
       },
       auditForm: {
         travelWay: 1
@@ -489,8 +504,18 @@ export default {
     searchParams() {
       const result = {}
       Object.keys(this.form).forEach((key) => {
-        if (this.form[key] || this.form[key] === 0) {
-          result[key] = this.form[key]
+        if (this.form[key] || this.form[key] === 0 || this.form[key] === false) {
+          if (key === 'ruleAt' && this.form[key] && this.form[key].length > 0) {
+            const [begin, end] = this.form[key]
+            result.ruleBeginAt = moment(begin).format('YYYY-MM-DD HH:mm:ss')
+            result.ruleEndAt = moment(end).format('YYYY-MM-DD HH:mm:ss')
+          } else if (key === 'similarity') {
+            result[key] = Number(this.form[key])
+          } else if (key === 'licensePlateStatus') {
+            result[key] = this.form[key] ? 2 : 0
+          } else {
+            result[key] = this.form[key]
+          }
         }
       })
       return result
@@ -518,28 +543,25 @@ export default {
     this.getTableData()
   },
   methods: {
-    async getTableData(params) {
-      console.log(this.searchParams)
+    getTableData(params) {
       this.tableLoading = true
-      try {
-        const res = await axios.post('/api/rules/search', {
-          pageNo: this.pageNo,
-          pageSize: this.pageSize,
-          ...params
-        })
-        const { status, data, msg } = res
-        if (!status) {
-          this.pageNo = data.pageNo
-          this.pageSize = data.pageSize
-          this.total = data.totalCount
-          this.dataSource = data.data
-        } else {
-          this.$message.error(msg)
-        }
+      axios.post('/api/rules/search', {
+        pageNo: this.pageNo,
+        pageSize: this.pageSize,
+        ...this.searchParams,
+        ...params
+      }).then(res => {
+        console.log(res)
+        const { data, pageNo, pageSize, totalCount } = res.data
+        this.pageNo = pageNo
+        this.pageSize = pageSize
+        this.total = totalCount
+        this.dataSource = data
         this.tableLoading = false
-      } catch (error) {
+      }).catch(() => {
+        this.$message.error('操作失败')
         this.tableLoading = false
-      }
+      })
     },
     selectRuleType(value) {
       // 查询条件
@@ -560,37 +582,37 @@ export default {
       this.pageNo = value
       this.getTableData()
     },
-    async handleShowDialog(isAudit) {
+    handleShowDialog(isAudit) {
       // 弹窗展示
       if (!this.selectedRowKey) {
         this.$message.error('请先选择要操作的数据')
         return
       }
-      if (isAudit) {
-        if (
-          this.verifyedStatusMap.get(this.selectedRowData.ruletype) !== '未审核'
-        ) {
-          this.$message.error('请选择未审核的记录')
-          return
-        }
-      } else {
-        if (
-          !['已审核', '已作废'].includes(
-            this.verifyedStatusMap.get(this.selectedRowData.ruletype)
-          )
-        ) {
-          this.$message.error('请选择已审核或已作废的记录')
-          return
-        }
-      }
+      // if (isAudit) {
+      //   if (
+      //     this.verifyedStatusMap.get(this.selectedRowData.ruletype) !== '未审核'
+      //   ) {
+      //     this.$message.error('请选择未审核的记录')
+      //     return
+      //   }
+      // } else {
+      //   if (
+      //     !['已审核', '已作废'].includes(
+      //       this.verifyedStatusMap.get(this.selectedRowData.ruletype)
+      //     )
+      //   ) {
+      //     this.$message.error('请选择已审核或已作废的记录')
+      //     return
+      //   }
+      // }
       if (isAudit) {
         this.auditLoading = true
       } else {
         this.detailLoading = true
       }
       this.isAudit = isAudit
-      try {
-        const res = await axios.get(`/api/rules/${this.selectedRowKey}`)
+      axios.get(`/api/rules/${this.selectedRowKey}`).then(res => {
+        console.log(res)
         const { status, data, msg } = res
         if (!status) {
           this.info = data
@@ -609,13 +631,13 @@ export default {
         } else {
           this.detailLoading = false
         }
-      } catch (error) {
+      }).catch(() => {
         if (isAudit) {
           this.auditLoading = false
         } else {
           this.detailLoading = false
         }
-      }
+      })
     },
     handleSelectFaceImg(value) {
       // 选择相似信息
