@@ -37,8 +37,8 @@
     <el-row class="btns_box">
       <el-button @click="handleClickAdd">新建</el-button>
       <el-button @click="handleClickUpdate">修改</el-button>
-      <el-button @click="handleClick('start')">启动</el-button>
-      <el-button @click="handleClick('stop')">禁用</el-button>
+      <el-button @click="handleClickStart">启动</el-button>
+      <el-button @click="handleClickStop">禁用</el-button>
       <el-button @click="handleClick('service')">删除</el-button>
     </el-row>
     <el-table
@@ -46,21 +46,24 @@
       :data="tableData"
       style="width: 100%"
       border
-      @selection-change="handleSelectionChange"
     >
-      <el-table-column
-        type="selection"
-        width="55"
-      />
+      <el-table-column label="操作" width="50">
+        <template slot-scope="scope">
+          <el-radio
+            class="selectRow-radio"
+            :label="scope.row.id"
+            :value="selectedRowKey"
+            @change="handleSelectRow(scope.row.id)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         prop="username"
         label="用户名"
-        width="300"
       />
       <el-table-column
         prop="所属派出所"
         label="psid"
-        width="150"
       />
       <el-table-column
         prop="telephone"
@@ -81,6 +84,7 @@
         layout="prev, pager, next"
         :total="paginationTotal"
         :page-size="10"
+        :current-page="currentPage"
         @current-change="currentChange"
       />
     </div>
@@ -89,13 +93,14 @@
 
 <script>
 import axios from '@/utils/request'
-import Router from '../../router/index'
 
 export default {
   data() {
     return {
       listLoading: false,
+      currentPage: 1,
       paginationTotal: 0,
+      selectedRowKey: null, // 选择的行的id
       statusOptions: [
         {
           value: 0,
@@ -110,7 +115,6 @@ export default {
           label: '禁用'
         }
       ],
-      multipleSelection: [], // 选择的行
       tableData: [],
       form: {
         roadposition: '',
@@ -124,6 +128,10 @@ export default {
     this.getTableData(1)
   },
   methods: {
+    handleSelectRow(value) {
+      // 单选
+      this.selectedRowKey = value
+    },
     getTableData(pageNumber) {
       this.listLoading = true
       axios.post('/api/users/search', {
@@ -143,9 +151,6 @@ export default {
         })
       })
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
-    },
     currentChange(pageNumber) {
       this.getTableData(pageNumber)
     },
@@ -154,16 +159,68 @@ export default {
       this.getTableData(1)
     },
     handleClickAdd() {
-      Router.push('/user/add')
+      this.$router.push({
+        path: '/user/add'
+      })
     },
     handleClickUpdate() {
-      console.log(11)
+      if (!this.selectedRowKey) {
+        this.$message({
+          message: '请先选择一条数据',
+          type: 'error'
+        })
+        return
+      }
+      this.$router.push({
+        path: '/user/add',
+        query: {
+          id: this.selectedRowKey
+        }
+      })
+    },
+    handleClickStart() {
+      if (!this.selectedRowKey) {
+        this.$message({
+          message: '请先选择一条数据',
+          type: 'error'
+        })
+        return
+      }
+      axios.put('/api/users', {
+        id: this.selectedRowKey,
+        status: 2
+      }).then((res) => {
+        this.$message.success('操作成功')
+        this.currentPage = 1
+        this.getTableData(1)
+      }).catch(() => {
+        this.$message.error('操作失败')
+      })
+    },
+    handleClickStop() {
+      if (!this.selectedRowKey) {
+        this.$message({
+          message: '请先选择一条数据',
+          type: 'error'
+        })
+        return
+      }
+      axios.put('/api/users', {
+        id: this.selectedRowKey,
+        status: 1
+      }).then((res) => {
+        this.$message.success('操作成功')
+        this.currentPage = 1
+        this.getTableData(1)
+      }).catch(() => {
+        this.$message.error('操作失败')
+      })
     }
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .btns_box {
   margin-bottom: 20px;
 }
@@ -171,3 +228,14 @@ export default {
   margin-top: 20px;
 }
 </style>
+<style lang="scss">
+.selectRow-radio {
+  .el-radio__input {
+    margin-left: 7px;
+  }
+  .el-radio__label {
+    display: none;
+  }
+}
+</style>
+
