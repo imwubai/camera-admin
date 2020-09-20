@@ -71,7 +71,7 @@
       <el-button type="primary" :loading="auditLoading" @click="handleShowDialog(true)">审核</el-button>
       <el-button type="primary" :loading="detailLoading" @click="handleShowDialog(false)">查看</el-button>
     </el-row>
-    <el-table v-loading="tableLoading" :row-key="id" :data="dataSource" style="width: 100%" border>
+    <el-table v-loading="tableLoading" row-key="id" :data="dataSource" style="width: 100%" border>
       <el-table-column label="操作" width="50">
         <template slot-scope="scope">
           <el-radio
@@ -138,12 +138,11 @@
         <div class="audit-dialog-content-left">
           <div class="evidence-block">
             <div class="evidence-block-imgDiv">
-              <img :key="item" :src="info.evidencePhoto[0]" alt>
+              <img :src="info.evidencePhoto[0]" alt>
             </div>
             <div class="evidence-block-imgDiv">
               <img
                 v-if="info.evidencePhoto && info.evidencePhoto[1]"
-                :key="item"
                 :src="info.evidencePhoto[1]"
                 alt
               >
@@ -225,11 +224,13 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="车牌号：">
-                    <el-input v-model="auditForm.licensePlate" placeholder="请输入" />
+                    <el-input v-if="isAudit" v-model="auditForm.licensePlate" placeholder="请输入" />
+                    <div v-else>{{ auditForm.licensePlate }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="手机号：">{{ selectedFacePhoto.phone }}</el-form-item>
+                  <el-form-item label="手机号：">
+                    {{ selectedFacePhoto.phone }}</el-form-item>
                 </el-col>
               </el-row>
               <el-row>
@@ -242,7 +243,7 @@
                       :rows="4"
                       placeholder="请输入"
                     />
-                    <div v-else>{{ auditForm.template }}</div>
+                    <div v-else style="line-height: 24px">{{ auditForm.template }}</div>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -251,8 +252,8 @@
         </div>
       </div>
       <div v-if="isAudit" slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="handleAudit">审核</el-button>
-        <el-button @click="handleInvalid">作废</el-button>
+        <el-button type="primary" @click="handleAuditOrInvaild(true)">审核</el-button>
+        <el-button @click="handleAuditOrInvaild(false)">作废</el-button>
         <el-button @click="handleCancel">取消</el-button>
       </div>
     </el-dialog>
@@ -376,7 +377,8 @@ export default {
         licensePlateStatus: false
       },
       auditForm: {
-        travelWay: 1
+        travelWay: 1,
+        template: '【姓名】，您于【违法时间】在【违法地点】驾驶【车牌号】非机动车，被电子警察记录了“【违法类型】”的违法行为，请及时接受处理。处理途径：1.xxxx；2.xxx;3xxx;咨询电话：xxxxx。'
       },
       selectedRowKey: 0,
       isAudit: false,
@@ -539,6 +541,16 @@ export default {
       return result
     }
   },
+  watch: {
+    dialogVisible(value) {
+      if (!value) {
+        this.auditForm = {
+          travelWay: 1,
+          template: '【姓名】，您于【违法时间】在【违法地点】驾驶【车牌号】非机动车，被电子警察记录了“【违法类型】”的违法行为，请及时接受处理。处理途径：1.xxxx；2.xxx;3xxx;咨询电话：xxxxx。'
+        }
+      }
+    }
+  },
   mounted() {
     this.getTableData()
   },
@@ -643,11 +655,27 @@ export default {
       // 选择相似信息
       this.selectedFacePhotoKey = value
     },
-    handleAudit() {
-      // 弹窗-审核
-    },
-    handleInvalid() {
-      // 弹窗-作废
+    handleAuditOrInvaild(isAudit) { // 弹窗-审核/作废
+      if (this.auditForm.licensePlate) {
+        this.$message.error('车牌号不能为空')
+        return
+      }
+      if (this.auditForm.template) {
+        this.$message.error('短信模板不能为空')
+        return
+      }
+      const params = {
+        id: this.selectedRowKey,
+        imgId: this.selectedFacePhoto.idCard,
+        verifyedName: localStorage.getItem('username'),
+        ...this.auditForm
+      }
+      if (isAudit) {
+        params.verifyedStatus = 2
+      } else {
+        params.verifyedStatus = 3
+      }
+      console.log(params)
     },
     handleCancel() {
       // 弹窗-取消
