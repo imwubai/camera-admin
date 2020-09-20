@@ -102,36 +102,17 @@ export default {
     }
   },
   mounted: function() {
-    this.getTableData(1)
-  },
-  methods: {
-    getTableData(pageNumber) {
-      // console.log({...this.searchData})
+    const { id } = this.$route.query
+    if (id) {
       // axios.post('/get_sys_stat').then((res) => {
       //   this.form.big_cam_stat = res.data.big_cam_stat
       //   this.form.middle_cam_stat = res.data.middle_cam_stat
       // }).catch((a) => {
-      //   this.$message({
-      //     message: '获取数据异常',
-      //     type: 'error'
-      //   })
+      //   this.$message.error('获取数据异常')
       // })
-      this.listLoading = true
-      // console.log(e)
-      setTimeout(() => {
-        this.listLoading = false
-      }, 500)
-    },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
-    },
-    currentChange(pageNumber) {
-      this.getTableData(pageNumber)
-    },
-    onSearch() {
-      this.searchData = this.form
-      this.getTableData(1)
-    },
+    }
+  },
+  methods: {
     handleClick(type) {
       console.log(type)
       console.log(this.multipleSelection)
