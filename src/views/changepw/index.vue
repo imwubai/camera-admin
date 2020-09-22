@@ -64,9 +64,9 @@ export default {
         return
       }
       this.saveLoading = true
-      axios.post('/set_pwd', {
-        new_pwd: newPw,
-        old_pwd: oldPw,
+      axios.post('/api/changepassword', {
+        newPassword: newPw,
+        oldPassword: oldPw,
         user_name: localStorage.getItem('username')
       }).then((res) => {
         this.saveLoading = false

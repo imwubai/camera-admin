@@ -4,7 +4,7 @@
       <el-row :gutter="20">
         <el-col :span="6">
           <el-form-item label="用户名" prop="username">
-            <el-input v-model="form.username" placeholder="支持中文，英文，数字，以及三种类型组合" maxlength="20" />
+            <el-input v-model="form.username" :disabled="isUpdate" placeholder="支持中文，英文，数字，以及三种类型组合" maxlength="20" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -76,6 +76,8 @@ export default {
     }
     return {
       saveLoading: false,
+      isUpdate: false, // 是否是修改模式
+      id: '', // 修改用户的id
       formRules: {
         username: [
           { required: true, trigger: 'change', validator: validateInput }
@@ -98,49 +100,87 @@ export default {
           label: '禁用'
         }
       ],
-      form: {}
+      form: {
+        username: '',
+        psid: '',
+        telephone: '',
+        password: ''
+      }
     }
   },
   mounted: function() {
-    const { id } = this.$route.query
-    if (id) {
-      // axios.post('/get_sys_stat').then((res) => {
-      //   this.form.big_cam_stat = res.data.big_cam_stat
-      //   this.form.middle_cam_stat = res.data.middle_cam_stat
-      // }).catch((a) => {
-      //   this.$message.error('获取数据异常')
-      // })
+    const { username, id } = this.$route.query
+    if (username) {
+      this.isUpdate = true
+      this.id = id
+      axios.post('/api/users/search', {
+        pageNo: 1,
+        pageSize: 10,
+        type: 2,
+        username
+      }).then((res) => {
+        const { username, telephone, psid } = res.data.data[0]
+        Object.assign(this.form, {
+          username,
+          telephone,
+          psid
+        })
+      }).catch((a) => {
+        this.$message({
+          message: '获取数据异常',
+          type: 'error'
+        })
+      })
     }
   },
   methods: {
-    handleClick(type) {
-      console.log(type)
-      console.log(this.multipleSelection)
-    },
     doSubmit() {
       this.$refs.form.validate(valid => {
         if (valid) {
           this.saveLoading = true
-          axios.post('/api/user', {
-            ...this.form,
-            type: 2
-          }).then((res) => {
-            this.saveLoading = false
-            this.$message({
-              message: '操作成功',
-              type: 'success',
-              duration: 1000,
-              onClose: () => {
-                location.reload()
-              }
+          if (this.isUpdate) {
+            axios.put('/api/users', {
+              id: this.id,
+              ...this.form
+            }).then((res) => {
+              this.saveLoading = false
+              this.$message({
+                message: '操作成功',
+                type: 'success',
+                duration: 1000,
+                onClose: () => {
+                  location.reload()
+                }
+              })
+            }).catch((a) => {
+              this.saveLoading = false
+              this.$message({
+                message: '操作失败',
+                type: 'error'
+              })
             })
-          }).catch((a) => {
-            this.saveLoading = false
-            this.$message({
-              message: '操作失败',
-              type: 'error'
+          } else {
+            axios.post('/api/user', {
+              ...this.form,
+              type: 2
+            }).then((res) => {
+              this.saveLoading = false
+              this.$message({
+                message: '操作成功',
+                type: 'success',
+                duration: 1000,
+                onClose: () => {
+                  location.reload()
+                }
+              })
+            }).catch((a) => {
+              this.saveLoading = false
+              this.$message({
+                message: '操作失败',
+                type: 'error'
+              })
             })
-          })
+          }
         }
       })
     }
