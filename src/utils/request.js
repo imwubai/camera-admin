@@ -1,6 +1,6 @@
 import axios from 'axios'
 // import { Message } from 'element-ui'
-import Router from '../router/index'
+// import Router from '../router/index'
 import { apiDomain } from '@/utils/config'
 // 所有请求头加上token
 import { getToken } from '@/utils/auth'
@@ -21,7 +21,8 @@ axios.interceptors.response.use(function(response) {
     localStorage.removeItem('Authorization')
     localStorage.removeItem('username')
     // console.log(Router)
-    Router.push(`/login`)
+    // Router.push(`/login`)
+    location.reload()
   }
   // Any status codes that falls outside the range of 2xx cause this function to trigger
   // Do something with response error
