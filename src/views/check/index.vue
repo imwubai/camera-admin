@@ -84,8 +84,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="3">
-          <el-form-item label="有无车牌">
-            <el-checkbox v-model="form.licensePlateStatus" />
+          <el-form-item label-width="0">
+            <el-checkbox v-model="form.licensePlateStatus" label="有无车牌" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
