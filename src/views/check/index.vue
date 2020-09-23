@@ -22,7 +22,12 @@
         >{{ value }}</el-button>
       </block>
     </div> -->
-    <el-form ref="form" class="roadposition_form" :model="form" label-width="120px">
+    <el-form
+      ref="form"
+      class="roadposition_form"
+      :model="form"
+      label-width="120px"
+    >
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="违法地点">
@@ -89,15 +94,33 @@
           </el-form-item>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" :loading="searchLoading" @click="handleSearch">查询</el-button>
+          <el-button
+            type="primary"
+            :loading="searchLoading"
+            @click="handleSearch"
+          >查询</el-button>
         </el-col>
       </el-row>
     </el-form>
     <el-row class="btns_box">
-      <el-button type="primary" :loading="auditLoading" @click="handleShowDialog(true)">审核</el-button>
-      <el-button type="primary" :loading="detailLoading" @click="handleShowDialog(false)">查看</el-button>
+      <el-button
+        type="primary"
+        :loading="auditLoading"
+        @click="handleShowDialog(true)"
+      >审核</el-button>
+      <el-button
+        type="primary"
+        :loading="detailLoading"
+        @click="handleShowDialog(false)"
+      >查看</el-button>
     </el-row>
-    <el-table v-loading="tableLoading" row-key="id" :data="dataSource" style="width: 100%" border>
+    <el-table
+      v-loading="tableLoading"
+      row-key="id"
+      :data="dataSource"
+      style="width: 100%"
+      border
+    >
       <el-table-column label="操作" width="50">
         <template slot-scope="scope">
           <el-radio
@@ -112,18 +135,24 @@
       <el-table-column prop="ruleAt" label="采集时间" />
       <el-table-column prop="rulePlace" label="违法地点" />
       <el-table-column prop="ruleType" label="违法类型">
-        <template slot-scope="scope">{{ ruleTypeMap.get(scope.row.ruleType) }}</template>
+        <template slot-scope="scope">{{
+          ruleTypeMap.get(scope.row.ruleType)
+        }}</template>
       </el-table-column>
       <el-table-column prop="similarity" label="相似度" />
       <el-table-column prop="verifyedStatus" label="审核状态">
-        <template
-          slot-scope="scope"
-        >{{ scope.row.verifyedStatus ? verifyedStatusMap.get(scope.row.verifyedStatus) : '' }}</template>
+        <template slot-scope="scope">{{
+          scope.row.verifyedStatus
+            ? verifyedStatusMap.get(scope.row.verifyedStatus)
+            : ""
+        }}</template>
       </el-table-column>
       <el-table-column label="当事人处理结果">
-        <template
-          slot-scope="scope"
-        >{{ scope.row.handledStatus ? handledStatusMap.get(scope.row.handledStatus) : '' }}</template>
+        <template slot-scope="scope">{{
+          scope.row.handledStatus
+            ? handledStatusMap.get(scope.row.handledStatus)
+            : ""
+        }}</template>
       </el-table-column>
       <el-table-column prop="verifyedAt" label="审核时间" />
       <el-table-column prop="verifyedName" label="审核人" />
@@ -167,22 +196,39 @@
             <div class="license-block-imgDiv">
               <div class="title">推荐/车主</div>
               <img
-                :src="`${imgOrigin}/${isAudit ? selectedHaikang.licensePhoto : info.licensePhoto}`"
+                :src="`${imgOrigin}/${
+                  isAudit ? selectedHaikang.licensePhoto : info.licensePhoto
+                }`"
                 alt
               >
             </div>
             <div class="license-block-tipDiv">
-              <div>身份证号：{{ idCard(isAudit ? selectedHaikang.license : info.license) }}</div>
-              <div>相似度：{{ isAudit ? selectedHaikang.similarity : info.similarity }}</div>
+              <div>
+                身份证号：{{
+                  idCard(isAudit ? selectedHaikang.license : info.license)
+                }}
+              </div>
+              <div>
+                相似度：{{
+                  isAudit ? selectedHaikang.similarity : info.similarity
+                }}
+              </div>
             </div>
           </div>
         </div>
         <div class="audit-dialog-content-right">
-          <div v-show="info.haikang && info.haikang.length > 0" class="similarity-block">
+          <div
+            v-show="info.haikang && info.haikang.length > 0"
+            class="similarity-block"
+          >
             <div
               v-for="(item, index) in info.haikang"
               :key="item.id"
-              :class="{'similarity-block-imgDiv': true, 'similarity-block-imgDiv-selected': item.id === selectedHaikangKey}"
+              :class="{
+                'similarity-block-imgDiv': true,
+                'similarity-block-imgDiv-selected':
+                  item.id === selectedHaikangKey,
+              }"
               @click="handleSelectFaceImg(item.id)"
             >
               <img :src="`${imgOrigin}/${item.licensePhoto}`" alt>
@@ -200,7 +246,12 @@
               <el-row>
                 <el-col :span="12">
                   <el-form-item label="违法类型：">
-                    <el-select v-if="isAudit" v-model="auditForm.ruleType" placeholder="请选择" @change="auditRuleTypeChange">
+                    <el-select
+                      v-if="isAudit"
+                      v-model="auditForm.ruleType"
+                      placeholder="请选择"
+                      @change="auditRuleTypeChange"
+                    >
                       <el-option
                         v-for="item in ruleTypeOptions.operateOptions"
                         :key="item.value"
@@ -213,7 +264,12 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="出行方式：">
-                    <el-select v-if="isAudit" v-model="auditForm.travelMode" placeholder="请选择" @change="auditTravelModeChange">
+                    <el-select
+                      v-if="isAudit"
+                      v-model="auditForm.travelMode"
+                      placeholder="请选择"
+                      @change="auditTravelModeChange"
+                    >
                       <el-option
                         v-for="item in travelModeOptions.operateOptions"
                         :key="item.value"
@@ -225,26 +281,38 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="采集时间：">{{ info.ruleAt }}</el-form-item>
+                  <el-form-item label="采集时间：">{{
+                    info.ruleAt
+                  }}</el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="审核时间：">{{ info.verifyedAt }}</el-form-item>
+                  <el-form-item label="审核时间：">{{
+                    info.verifyedAt
+                  }}</el-form-item>
                 </el-col>
               </el-row>
               <el-row>
                 <el-col :span="12">
-                  <el-form-item label="姓名：">{{ isAudit ? selectedHaikang.ruleName : info.ruleName }}</el-form-item>
+                  <el-form-item label="姓名：">{{
+                    isAudit ? selectedHaikang.ruleName : info.ruleName
+                  }}</el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="车牌号：">
-                    <el-input v-if="isAudit" v-model="auditForm.licensePlate" placeholder="请输入" maxlength="20" @input="auditLicensePlateChange" />
+                    <el-input
+                      v-if="isAudit"
+                      v-model="auditForm.licensePlate"
+                      placeholder="请输入"
+                      maxlength="20"
+                      @input="auditLicensePlateChange"
+                    />
                     <div v-else>{{ info.licensePlate }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item
-                    label="手机号："
-                  >{{ isAudit ? selectedHaikang.telephone : info.telephone }}</el-form-item>
+                  <el-form-item label="手机号：">{{
+                    isAudit ? selectedHaikang.telephone : info.telephone
+                  }}</el-form-item>
                 </el-col>
               </el-row>
               <el-row>
@@ -257,7 +325,9 @@
                       :rows="4"
                       placeholder="请输入"
                     />
-                    <div v-else style="line-height: 24px">{{ info.message }}</div>
+                    <div v-else style="line-height: 24px">
+                      {{ info.message }}
+                    </div>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -266,8 +336,15 @@
         </div>
       </div>
       <div v-if="isAudit" slot="footer" class="dialog-footer">
-        <el-button type="primary" :loading="confirmLoading" @click="handleAuditOrInvaild(true)">审核</el-button>
-        <el-button :loading="confirmLoading" @click="handleAuditOrInvaild(false)">作废</el-button>
+        <el-button
+          type="primary"
+          :loading="confirmLoading"
+          @click="handleAuditOrInvaild(true)"
+        >审核</el-button>
+        <el-button
+          :loading="confirmLoading"
+          @click="handleAuditOrInvaild(false)"
+        >作废</el-button>
         <el-button @click="handleCancel">取消</el-button>
       </div>
     </el-dialog>
@@ -477,6 +554,7 @@ export default {
   },
   mounted() {
     this.getTableData()
+    this.getStatisticalData()
   },
   methods: {
     idCard(text) {
@@ -503,6 +581,16 @@ export default {
           this.$message.error('获取违法数据失败')
           this.tableLoading = false
         })
+    },
+    getStatisticalData() {
+      axios.get('/api/times').then((res) => {
+        const {
+          data: { getNumber, verifyedNumber, voidNumber }
+        } = res
+        this.count1 = getNumber
+        this.count2 = verifyedNumber
+        this.count3 = voidNumber
+      })
     },
     // selectRuleType(value) {
     //   // 查询条件
@@ -536,7 +624,14 @@ export default {
       this.auditForm.message = this.defaultMessage()
     },
     defaultMessage() {
-      const { name, time, address, licensePlate, ruleType, travelMode } = this.defaultMessageObj
+      const {
+        name,
+        time,
+        address,
+        licensePlate,
+        ruleType,
+        travelMode
+      } = this.defaultMessageObj
       return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`
     },
     handleShowDialog(isAudit) {
@@ -584,7 +679,8 @@ export default {
                     id: index + 1
                   }))
                 }
-                this.selectedHaikangKey = (data2 && data2.length > 0 ? data2[0].id : 0)
+                this.selectedHaikangKey =
+                  data2 && data2.length > 0 ? data2[0].id : 0
                 this.defaultMessageObj = {
                   name: this.selectedHaikang.ruleName,
                   time: this.info.ruleAt,
@@ -675,6 +771,7 @@ export default {
           this.getTableData({
             pageNo: 1
           })
+          this.getStatisticalData()
           this.confirmLoading = false
         })
         .catch(() => {
