@@ -30,7 +30,7 @@
     <el-row class="btns_box">
       <el-button @click="handleClick('start')">新建</el-button>
       <el-button @click="handleClick('stop')">修改</el-button>
-      <el-button type="danger" @click="handleClickDel">删除</el-button>
+      <el-button @click="handleClickDel">删除</el-button>
       <el-button @click="handleClick('href')">路口归置</el-button>
     </el-row>
     <el-table

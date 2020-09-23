@@ -39,7 +39,7 @@
       <el-button @click="handleClickUpdate">修改</el-button>
       <el-button @click="handleClickStart">启动</el-button>
       <el-button @click="handleClickStop">禁用</el-button>
-      <el-button type="danger" @click="handleClickDel">删除</el-button>
+      <el-button @click="handleClickDel">删除</el-button>
     </el-row>
     <el-table
       v-loading="listLoading"

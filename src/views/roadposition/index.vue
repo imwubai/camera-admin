@@ -40,24 +40,33 @@
       :data="tableData"
       style="width: 100%"
       border
-      @selection-change="handleSelectionChange"
     >
-      <el-table-column
-        type="selection"
-        width="55"
-      />
-      <el-table-column
-        prop="date"
-        label="路口方位"
-        width="300"
-      />
+      <el-table-column label="操作" width="50">
+        <template slot-scope="scope">
+          <el-radio
+            class="selectRow-radio"
+            :label="scope.row.id"
+            :value="selectedRowKey"
+            @change="handleSelectRow(scope.row.id)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         prop="name"
-        label="状态"
-        width="150"
+        label="路口方位"
       />
       <el-table-column
-        prop="address"
+        prop="status"
+        label="状态"
+      >
+        <template slot-scope="scope">
+          <div v-if="scope.row.status === 2">启用</div>
+          <div v-if="scope.row.status === 1">禁用</div>
+          <div v-if="scope.row.status === 3">维修</div>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="cid"
         label="所属路口"
       />
     </el-table>
@@ -65,7 +74,7 @@
       <el-pagination
         background
         layout="prev, pager, next"
-        :total="1000"
+        :total="paginationTotal"
         :page-size="10"
         @current-change="currentChange"
       />
@@ -75,131 +84,63 @@
 
 <script>
 import axios from '@/utils/request'
-console.log(axios)
 
 export default {
   data() {
     return {
       listLoading: false,
+      currentPage: 1,
+      paginationTotal: 0,
+      selectedRowKey: null, // 选择的行的id
+      tableData: [],
+      form: {},
+      searchData: {}, // 搜索数据
       statusOptions: [
         {
           value: 0,
           label: '全部'
         },
         {
-          value: 1,
+          value: 2,
           label: '启用'
         },
         {
-          value: 2,
+          value: 1,
           label: '禁用'
         },
         {
           value: 3,
           label: '维修'
         }
-      ],
-      multipleSelection: [], // 选择的行
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      },
-      {
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      },
-      {
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      },
-      {
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }
-      ],
-      form: {
-        roadposition: '',
-        road: '',
-        status: 0
-      },
-      searchData: {} // 搜索数据
+      ]
     }
   },
   mounted: function() {
     this.getTableData(1)
   },
   methods: {
-    getTableData(pageNumber) {
-      // console.log({...this.searchData})
-      // axios.post('/get_sys_stat').then((res) => {
-      //   this.form.big_cam_stat = res.data.big_cam_stat
-      //   this.form.middle_cam_stat = res.data.middle_cam_stat
-      // }).catch((a) => {
-      //   this.$message({
-      //     message: '获取数据异常',
-      //     type: 'error'
-      //   })
-      // })
-      this.listLoading = true
-      // console.log(e)
-      setTimeout(() => {
-        this.listLoading = false
-      }, 500)
+    handleSelectRow(value) {
+      // 单选
+      this.selectedRowKey = value
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+    getTableData(pageNumber) {
+      this.listLoading = true
+      axios.post('/api/crossingpoints/search', {
+        pageNo: pageNumber,
+        pageSize: 10,
+        type: 2,
+        ...this.searchData
+      }).then((res) => {
+        this.listLoading = false
+        this.tableData = res.data.data
+        this.paginationTotal = res.data.totalCount
+      }).catch((a) => {
+        this.listLoading = false
+        this.$message({
+          message: '获取数据异常',
+          type: 'error'
+        })
+      })
     },
     currentChange(pageNumber) {
       this.getTableData(pageNumber)
@@ -209,8 +150,40 @@ export default {
       this.getTableData(1)
     },
     handleClick(type) {
-      console.log(type)
-      console.log(this.multipleSelection)
+      if (!this.selectedRowKey) {
+        this.$message({
+          message: '请先选择一条数据',
+          type: 'error'
+        })
+        return
+      }
+      if (type === 'href') {
+        const { name } = this.tableData.filter((item) => item.id === this.selectedRowKey)[0]
+        this.$router.push({
+          path: '/road/add',
+          query: {
+            id: this.selectedRowKey,
+            name
+          }
+        })
+      } else {
+        const statusObj = {
+          start: 2,
+          stop: 1,
+          service: 3
+        }
+        axios.put('/api/crossingpoints ', {
+          id: this.selectedRowKey,
+          status: statusObj[type]
+        }).then((res) => {
+          this.$message.success('操作成功')
+          this.selectedRowKey = null
+          this.currentPage = 1
+          this.getTableData(1)
+        }).catch(() => {
+          this.$message.error('操作失败')
+        })
+      }
     }
   }
 }
@@ -222,5 +195,15 @@ export default {
 }
 .table_pagination {
   margin-top: 20px;
+}
+</style>
+<style lang="scss">
+.selectRow-radio {
+  .el-radio__input {
+    margin-left: 7px;
+  }
+  .el-radio__label {
+    display: none;
+  }
 }
 </style>
