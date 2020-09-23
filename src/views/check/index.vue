@@ -86,20 +86,18 @@
       <el-table-column prop="createdAt" label="采集时间" width="150" />
       <el-table-column prop="rulePlace" label="违法地点" width="150" />
       <el-table-column prop="ruleType" label="违法类型" width="150">
-        <template slot-scope="scope">
-          {{ ruleTypeMap.get(scope.row.ruleType) }}
-        </template>
+        <template slot-scope="scope">{{ ruleTypeMap.get(scope.row.ruleType) }}</template>
       </el-table-column>
       <el-table-column prop="similarity" label="相似度" width="150" />
       <el-table-column prop="verifyedStatus" label="审核状态" width="150">
-        <template slot-scope="scope">
-          {{ scope.row.verifyedStatus ? verifyedStatusMap.get(scope.row.verifyedStatus) : '' }}
-        </template>
+        <template
+          slot-scope="scope"
+        >{{ scope.row.verifyedStatus ? verifyedStatusMap.get(scope.row.verifyedStatus) : '' }}</template>
       </el-table-column>
       <el-table-column label="当事人处理结果" width="150">
-        <template slot-scope="scope">
-          {{ scope.row.handledStatus ? handledStatusMap.get(scope.row.handledStatus) : '' }}
-        </template>
+        <template
+          slot-scope="scope"
+        >{{ scope.row.handledStatus ? handledStatusMap.get(scope.row.handledStatus) : '' }}</template>
       </el-table-column>
       <el-table-column prop="verifyedAt" label="审核时间" width="150" />
       <el-table-column prop="verifyedName" label="审核人" width="150" />
@@ -138,12 +136,12 @@
         <div class="audit-dialog-content-left">
           <div class="evidence-block">
             <div class="evidence-block-imgDiv">
-              <img :src="info.evidencePhoto[0]" alt>
+              <img :src="`${imgOrigin}/${info.evidenceBigPhoto}`" alt>
             </div>
             <div class="evidence-block-imgDiv">
               <img
-                v-if="info.evidencePhoto && info.evidencePhoto[1]"
-                :src="info.evidencePhoto[1]"
+                v-if="info.evidenceSmallPhoto"
+                :src="`${imgOrigin}/${info.evidenceSmallPhoto}`"
                 alt
               >
               <div v-else>暂无图片</div>
@@ -152,32 +150,35 @@
           <div class="license-block">
             <div class="license-block-imgDiv">
               <div class="title">当事人</div>
-              <img :src="info.licensePhoto" alt>
+              <img :src="`${imgOrigin}/${info.facePhoto}`" alt>
             </div>
             <div class="license-block-imgDiv">
               <div class="title">推荐/车主</div>
-              <img :src="selectedFacePhoto.imgUrl" alt>
+              <img
+                :src="`${imgOrigin}/${isAudit ? selectedHaikang.licensePhoto : info.licensePhoto}`"
+                alt
+              >
             </div>
             <div class="license-block-tipDiv">
-              <div>身份证号：******{{ String(selectedFacePhoto.idCard).substr(6,8) }}****</div>
-              <div>相似度：{{ selectedFacePhoto.similarity }}</div>
+              <div>身份证号：{{ idCard(isAudit ? selectedHaikang.license : info.license) }}</div>
+              <div>相似度：{{ isAudit ? selectedHaikang.similarity : info.similarity }}</div>
             </div>
           </div>
         </div>
         <div class="audit-dialog-content-right">
-          <div class="similarity-block">
+          <div v-show="info.haikang && info.haikang.length > 0" class="similarity-block">
             <div
-              v-for="(item, index) in info.facePhoto"
-              :key="item.idCard"
-              :class="{'similarity-block-imgDiv': true, 'similarity-block-imgDiv-selected': item.idCard === selectedFacePhotoKey}"
-              @click="handleSelectFaceImg(item.idCard)"
+              v-for="(item, index) in info.haikang"
+              :key="item.id"
+              :class="{'similarity-block-imgDiv': true, 'similarity-block-imgDiv-selected': item.id === selectedHaikangKey}"
+              @click="handleSelectFaceImg(item.id)"
             >
-              <img :src="item.imgUrl" alt>
+              <img :src="`${imgOrigin}/${item.licensePhoto}`" alt>
               <div class="name">
-                {{ item.name }}
+                {{ item.ruleName }}
                 <span>{{ item.similarity }}</span>
               </div>
-              <div class="idCard">******{{ String(item.idCard).substr(6,8) }}****</div>
+              <div class="idCard">{{ idCard(item.license) }}</div>
               <div class="index">{{ index + 1 }}</div>
               <div class="tick" />
             </div>
@@ -195,42 +196,43 @@
                         :value="item.value"
                       />
                     </el-select>
-                    <div v-else>{{ ruleTypeMap.get(auditForm.ruleType) }}</div>
+                    <div v-else>{{ ruleTypeMap.get(info.ruleType) }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="出行方式：">
-                    <el-select v-if="isAudit" v-model="auditForm.travelWay" placeholder="请选择">
+                    <el-select v-if="isAudit" v-model="auditForm.travelMode" placeholder="请选择">
                       <el-option
-                        v-for="item in travelWayOptions.operateOptions"
+                        v-for="item in travelModeOptions.operateOptions"
                         :key="item.value"
                         :label="item.label"
                         :value="item.value"
                       />
                     </el-select>
-                    <div v-else>{{ travelWayMap.get(auditForm.travelWay) }}</div>
+                    <div v-else>{{ travelModeMap.get(info.travelMode) }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="采集时间：">{{ info.createdAt }}</el-form-item>
+                  <el-form-item label="采集时间：">{{ info.ruleAt }}</el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="审核时间：">{{ info.updatedAt }}</el-form-item>
+                  <el-form-item label="审核时间：">{{ info.verifyedAt }}</el-form-item>
                 </el-col>
               </el-row>
               <el-row>
                 <el-col :span="12">
-                  <el-form-item label="姓名：">{{ selectedFacePhoto.name }}</el-form-item>
+                  <el-form-item label="姓名：">{{ isAudit ? selectedHaikang.ruleName : info.ruleName }}</el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="车牌号：">
                     <el-input v-if="isAudit" v-model="auditForm.licensePlate" placeholder="请输入" />
-                    <div v-else>{{ auditForm.licensePlate }}</div>
+                    <div v-else>{{ info.licensePlate }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="手机号：">
-                    {{ selectedFacePhoto.phone }}</el-form-item>
+                  <el-form-item
+                    label="手机号："
+                  >{{ isAudit ? selectedHaikang.telephone : info.telephone }}</el-form-item>
                 </el-col>
               </el-row>
               <el-row>
@@ -238,12 +240,12 @@
                   <el-form-item label="短信模板：">
                     <el-input
                       v-if="isAudit"
-                      v-model="auditForm.template"
+                      v-model="auditForm.message"
                       type="textarea"
                       :rows="4"
                       placeholder="请输入"
                     />
-                    <div v-else style="line-height: 24px">{{ auditForm.template }}</div>
+                    <div v-else style="line-height: 24px">{{ info.message }}</div>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -252,8 +254,8 @@
         </div>
       </div>
       <div v-if="isAudit" slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="handleAuditOrInvaild(true)">审核</el-button>
-        <el-button @click="handleAuditOrInvaild(false)">作废</el-button>
+        <el-button type="primary" :loading="confirmLoading" @click="handleAuditOrInvaild(true)">审核</el-button>
+        <el-button :loading="confirmLoading" @click="handleAuditOrInvaild(false)">作废</el-button>
         <el-button @click="handleCancel">取消</el-button>
       </div>
     </el-dialog>
@@ -263,10 +265,14 @@
 <script>
 import moment from 'moment'
 import axios from '@/utils/request'
+import { apiDomain } from '@/utils/config'
 
 export default {
   data() {
     return {
+      imgOrigin: apiDomain,
+      defaultMessage:
+        '【姓名】，您于【违法时间】在【违法地点】驾驶【车牌号】非机动车，被电子警察记录了“【违法类型】”的违法行为，请及时接受处理。处理途径：1.xxxx；2.xxx;3xxx;咨询电话：xxxxx。',
       ruleTypeMap: new Map([
         [0, '全部'],
         [1, '闯红灯'],
@@ -288,7 +294,7 @@ export default {
         [2, '已处理'],
         [3, '无需处理']
       ]),
-      travelWayMap: new Map([
+      travelModeMap: new Map([
         [undefined, '全部'],
         [1, '电动自行车'],
         [2, '三轮车'],
@@ -302,71 +308,11 @@ export default {
       tableLoading: false,
       auditLoading: false,
       detailLoading: false,
+      confirmLoading: false,
       pageNo: 1,
       pageSize: 10,
       total: 4,
-      dataSource: [
-        {
-          id: 1,
-          rulename: '',
-          place: 'abc',
-          ruletype: 1,
-          evidencephoto: 'tmpfs/001_20200813113723_00000060.jpg',
-          license: '',
-          licensephoto: '',
-          facephoto: 'tmpfs/001_20200813113723_00000060-small.jpg',
-          facestatus: 0,
-          licenseplate: '',
-          status: 0,
-          createdat: '',
-          updatedat: ''
-        },
-        {
-          id: 6,
-          rulename: '',
-          place: 'abc',
-          ruletype: 1,
-          evidencephoto: 'tmpfs/001_20200813113723_00000060.jpg',
-          license: '',
-          licensephoto: '',
-          facephoto: 'tmpfs/001_20200813113723_00000060-small.jpg',
-          facestatus: 0,
-          licenseplate: '',
-          status: 0,
-          createdat: '',
-          updatedat: ''
-        },
-        {
-          id: 10,
-          rulename: '',
-          place: 'abc',
-          ruletype: 1,
-          evidencephoto: 'tmpfs/001_20200813113723_00000060.jpg',
-          license: '',
-          licensephoto: '',
-          facephoto: 'tmpfs/001_20200813113723_00000060-small.jpg',
-          facestatus: 0,
-          licenseplate: '',
-          status: 0,
-          createdat: '',
-          updatedat: ''
-        },
-        {
-          id: 14,
-          rulename: '',
-          place: 'abc',
-          ruletype: 1,
-          evidencephoto: 'tmpfs/001_20200813113723_00000060.jpg',
-          license: '',
-          licensephoto: '',
-          facephoto: 'tmpfs/001_20200813113723_00000060-small.jpg',
-          facestatus: 0,
-          licenseplate: '',
-          status: 0,
-          createdat: '',
-          updatedat: ''
-        }
-      ],
+      dataSource: [],
       count1: 0,
       count2: 0,
       count3: 0,
@@ -377,57 +323,13 @@ export default {
         licensePlateStatus: false
       },
       auditForm: {
-        travelWay: 1,
-        template: '【姓名】，您于【违法时间】在【违法地点】驾驶【车牌号】非机动车，被电子警察记录了“【违法类型】”的违法行为，请及时接受处理。处理途径：1.xxxx；2.xxx;3xxx;咨询电话：xxxxx。'
+        travelMode: 1
       },
       selectedRowKey: 0,
       isAudit: false,
       dialogVisible: false,
-      info: {
-        id: 1,
-        ruleName: '',
-        rulePlace: 'abc',
-        ruleType: 1,
-        evidencePhoto: [
-          'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600515914491&di=b63673597eded5672ff04a27e81a67db&imgtype=0&src=http%3A%2F%2Fi1.sinaimg.cn%2FIT%2F2010%2F0419%2F201041993511.jpg',
-          'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600515936948&di=397e5dc8a83256e03c6b22fbf3fc0aef&imgtype=0&src=http%3A%2F%2Fa4.att.hudong.com%2F22%2F59%2F19300001325156131228593878903.jpg'
-        ],
-        license: '',
-        licensePhoto:
-          'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600515914491&di=b63673597eded5672ff04a27e81a67db&imgtype=0&src=http%3A%2F%2Fi1.sinaimg.cn%2FIT%2F2010%2F0419%2F201041993511.jpg',
-        facePhoto: [
-          {
-            idCard: '111111111111111111',
-            name: 'a',
-            similarity: 90,
-            phone: 13534562446,
-            imgUrl:
-              'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600515914491&di=b63673597eded5672ff04a27e81a67db&imgtype=0&src=http%3A%2F%2Fi1.sinaimg.cn%2FIT%2F2010%2F0419%2F201041993511.jpg'
-          },
-          {
-            idCard: '222222222222222222',
-            name: 'b',
-            similarity: 88,
-            phone: 13534562449,
-            imgUrl:
-              'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600515914491&di=b63673597eded5672ff04a27e81a67db&imgtype=0&src=http%3A%2F%2Fi1.sinaimg.cn%2FIT%2F2010%2F0419%2F201041993511.jpg'
-          },
-          {
-            idCard: '333333333333333333',
-            name: 'c',
-            similarity: 80,
-            phone: 13534562440,
-            imgUrl:
-              'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600515914491&di=b63673597eded5672ff04a27e81a67db&imgtype=0&src=http%3A%2F%2Fi1.sinaimg.cn%2FIT%2F2010%2F0419%2F201041993511.jpg'
-          }
-        ],
-        faceStatus: 0,
-        licensePlate: '',
-        status: 0,
-        createdAt: '2020-09-18 09:36:20',
-        updatedAt: '2020-09-18 09:36:20'
-      },
-      selectedFacePhotoKey: '111111111111111111'
+      info: {},
+      selectedHaikangKey: 0
     }
   },
   computed: {
@@ -485,10 +387,10 @@ export default {
         operateOptions
       }
     },
-    travelWayOptions() {
+    travelModeOptions() {
       const searchOptions = []
       const operateOptions = []
-      this.travelWayMap.forEach((key, value) => {
+      this.travelModeMap.forEach((key, value) => {
         const o = {
           label: key,
           value
@@ -506,7 +408,11 @@ export default {
     searchParams() {
       const result = {}
       Object.keys(this.form).forEach((key) => {
-        if (this.form[key] || this.form[key] === 0 || this.form[key] === false) {
+        if (
+          this.form[key] ||
+          this.form[key] === 0 ||
+          this.form[key] === false
+        ) {
           if (key === 'ruleAt' && this.form[key] && this.form[key].length > 0) {
             const [begin, end] = this.form[key]
             result.ruleBeginAt = moment(begin).format('YYYY-MM-DD HH:mm:ss')
@@ -531,10 +437,10 @@ export default {
       })
       return result
     },
-    selectedFacePhoto() {
-      let result = {}
-      this.info.facePhoto.forEach((item) => {
-        if (item.idCard === this.selectedFacePhotoKey) {
+    selectedHaikang() {
+      let result = {};
+      (this.info.haikang || []).forEach((item) => {
+        if (item.id === this.selectedHaikangKey) {
           result = item
         }
       })
@@ -545,8 +451,8 @@ export default {
     dialogVisible(value) {
       if (!value) {
         this.auditForm = {
-          travelWay: 1,
-          template: '【姓名】，您于【违法时间】在【违法地点】驾驶【车牌号】非机动车，被电子警察记录了“【违法类型】”的违法行为，请及时接受处理。处理途径：1.xxxx；2.xxx;3xxx;咨询电话：xxxxx。'
+          travelMode: 1,
+          message: this.defaultMessage
         }
       }
     }
@@ -555,25 +461,30 @@ export default {
     this.getTableData()
   },
   methods: {
+    idCard(text) {
+      return text ? `******${String(text).substr(6, 8)}****` : ''
+    },
     getTableData(params) {
       this.tableLoading = true
-      axios.post('/api/rules/search', {
-        pageNo: this.pageNo,
-        pageSize: this.pageSize,
-        ...this.searchParams,
-        ...params
-      }).then(res => {
-        console.log(res)
-        const { data, pageNo, pageSize, totalCount } = res.data
-        this.pageNo = pageNo
-        this.pageSize = pageSize
-        this.total = totalCount
-        this.dataSource = data
-        this.tableLoading = false
-      }).catch(() => {
-        this.$message.error('操作失败')
-        this.tableLoading = false
-      })
+      axios
+        .post('/api/rules/search', {
+          pageNo: this.pageNo,
+          pageSize: this.pageSize,
+          ...this.searchParams,
+          ...params
+        })
+        .then((res) => {
+          const { data, pageNo, pageSize, totalCount } = res.data
+          this.pageNo = pageNo
+          this.pageSize = pageSize
+          this.total = totalCount
+          this.dataSource = data
+          this.tableLoading = false
+        })
+        .catch(() => {
+          this.$message.error('操作失败')
+          this.tableLoading = false
+        })
     },
     selectRuleType(value) {
       // 查询条件
@@ -623,59 +534,111 @@ export default {
         this.detailLoading = true
       }
       this.isAudit = isAudit
-      axios.get(`/api/rules/${this.selectedRowKey}`).then(res => {
-        console.log(res)
-        const { status, data, msg } = res
-        if (!status) {
-          this.info = data
-          this.auditForm = {
-            ruleType: this.selectedRowData.ruleType,
-            travelWay: data.travelWay || 1,
-            licensePlate: data.licensePlate,
-            template: data.template
+      axios
+        .get(`/api/rules/${this.selectedRowKey}`)
+        .then((res) => {
+          const { data } = res
+          if (isAudit) {
+            axios
+              .get('/api/faces')
+              .then((res2) => {
+                const { data: data2 } = res2
+                this.info = {
+                  ...data,
+                  haikang: (data2 || []).map((item, index) => ({
+                    ...item,
+                    id: index + 1
+                  }))
+                }
+                this.selectedHaikangKey =
+                  data2 && data2.length > 0 ? data2[0].id : 0
+                this.auditForm = {
+                  ruleType: data.ruleType,
+                  travelMode: data.travelMode || 1,
+                  licensePlate: data.licensePlate,
+                  message: data.message || this.defaultMessage
+                }
+                this.dialogVisible = true
+                if (isAudit) {
+                  this.auditLoading = false
+                } else {
+                  this.detailLoading = false
+                }
+              })
+              .catch(() => {
+                true
+                if (isAudit) {
+                  this.auditLoading = false
+                } else {
+                  this.detailLoading = false
+                }
+              })
+          } else {
+            this.info = data
+            this.auditForm = {
+              ruleType: data.ruleType,
+              travelMode: data.travelMode || 1,
+              licensePlate: data.licensePlate,
+              message: data.message || this.defaultMessage
+            }
+            this.dialogVisible = true
+            if (isAudit) {
+              this.auditLoading = false
+            } else {
+              this.detailLoading = false
+            }
           }
-          this.dialogVisible = true
-        } else {
-          this.$message.error(msg)
-        }
-        if (isAudit) {
-          this.auditLoading = false
-        } else {
-          this.detailLoading = false
-        }
-      }).catch(() => {
-        if (isAudit) {
-          this.auditLoading = false
-        } else {
-          this.detailLoading = false
-        }
-      })
+        })
+        .catch(() => {
+          if (isAudit) {
+            this.auditLoading = false
+          } else {
+            this.detailLoading = false
+          }
+        })
     },
     handleSelectFaceImg(value) {
       // 选择相似信息
-      this.selectedFacePhotoKey = value
+      this.selectedHaikangKey = value
     },
-    handleAuditOrInvaild(isAudit) { // 弹窗-审核/作废
-      if (this.auditForm.licensePlate) {
+    handleAuditOrInvaild(isAudit) {
+      // 弹窗-审核/作废
+      if (!this.auditForm.licensePlate) {
         this.$message.error('车牌号不能为空')
         return
       }
-      if (this.auditForm.template) {
+      if (!this.auditForm.message) {
         this.$message.error('短信模板不能为空')
         return
       }
       const params = {
         id: this.selectedRowKey,
-        imgId: this.selectedFacePhoto.idCard,
+        verifyedStatus: isAudit ? 2 : 3,
         verifyedName: localStorage.getItem('username'),
-        ...this.auditForm
+        ...this.auditForm,
+        ...this.selectedHaikang,
+        handledStatus: this.info.handledStatus,
+        licensePlateStatus: this.info.licensePlateStatus,
+        verifyedAt: moment().format('YYYY-MM-DD HH:mm:ss')
       }
       if (isAudit) {
         params.verifyedStatus = 2
       } else {
         params.verifyedStatus = 3
       }
-      console.log(params)
+      this.confirmLoading = true
+      axios
+        .put('/api/policestations', params)
+        .then(() => {
+          this.dialogVisible = false
+          this.getTableData({
+            pageNo: 1
+          })
+          this.confirmLoading = false
+        })
+        .catch(() => {
+          this.confirmLoading = false
+        })
     },
     handleCancel() {
       // 弹窗-取消
@@ -745,7 +708,7 @@ export default {
         display: flex;
         &-imgDiv {
           flex: 0 0 150px;
-          height: 200px;
+          height: 226px;
           .title {
             padding-top: 10px;
             color: #f00;
@@ -754,7 +717,7 @@ export default {
           img {
             display: block;
             width: 100%;
-            height: 100%;
+            height: 200px;
           }
         }
         &-tipDiv {
