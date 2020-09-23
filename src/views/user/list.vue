@@ -4,17 +4,17 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="用户名">
-            <el-input v-model="form.roadname" placeholder="请输入" />
+            <el-input v-model="form.username" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="所属派出所">
-            <el-input v-model="form.roadposition" placeholder="请输入" />
+            <el-input v-model="form.pid" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="手机号">
-            <el-input v-model="form.road" placeholder="请输入" />
+            <el-input v-model="form.telephone" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
@@ -39,7 +39,7 @@
       <el-button @click="handleClickUpdate">修改</el-button>
       <el-button @click="handleClickStart">启动</el-button>
       <el-button @click="handleClickStop">禁用</el-button>
-      <el-button @click="handleClick('service')">删除</el-button>
+      <el-button type="danger" @click="handleClickDel">删除</el-button>
     </el-row>
     <el-table
       v-loading="listLoading"
@@ -171,10 +171,12 @@ export default {
         })
         return
       }
+      const { username } = this.tableData.filter((item) => item.id === this.selectedRowKey)[0]
       this.$router.push({
         path: '/user/add',
         query: {
-          id: this.selectedRowKey
+          id: this.selectedRowKey,
+          username: username
         }
       })
     },
@@ -214,6 +216,28 @@ export default {
         this.getTableData(1)
       }).catch(() => {
         this.$message.error('操作失败')
+      })
+    },
+    handleClickDel() {
+      if (!this.selectedRowKey) {
+        this.$message({
+          message: '请先选择一条数据',
+          type: 'error'
+        })
+        return
+      }
+      this.$alert('确认删除？', '系统提示', {
+        confirmButtonText: '确定',
+        callback: () => {
+          axios.delete(`/api/users/${this.selectedRowKey}`).then((res) => {
+            this.$message.success('操作成功')
+            // 刷新列表
+            this.currentPage = 1
+            this.getTableData(1)
+          }).catch(() => {
+            this.$message.error('操作失败')
+          })
+        }
       })
     }
   }
