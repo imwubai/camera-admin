@@ -109,7 +109,7 @@
         </template>
       </el-table-column>
       <el-table-column type="index" label="序号" width="50" />
-      <el-table-column prop="createdAt" label="采集时间" />
+      <el-table-column prop="ruleAt" label="采集时间" />
       <el-table-column prop="rulePlace" label="违法地点" />
       <el-table-column prop="ruleType" label="违法类型">
         <template slot-scope="scope">{{ ruleTypeMap.get(scope.row.ruleType) }}</template>
@@ -200,7 +200,7 @@
               <el-row>
                 <el-col :span="12">
                   <el-form-item label="违法类型：">
-                    <el-select v-if="isAudit" v-model="auditForm.ruleType" placeholder="请选择">
+                    <el-select v-if="isAudit" v-model="auditForm.ruleType" placeholder="请选择" @change="auditRuleTypeChange">
                       <el-option
                         v-for="item in ruleTypeOptions.operateOptions"
                         :key="item.value"
@@ -213,7 +213,7 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="出行方式：">
-                    <el-select v-if="isAudit" v-model="auditForm.travelMode" placeholder="请选择">
+                    <el-select v-if="isAudit" v-model="auditForm.travelMode" placeholder="请选择" @change="auditTravelModeChange">
                       <el-option
                         v-for="item in travelModeOptions.operateOptions"
                         :key="item.value"
@@ -237,7 +237,7 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="车牌号：">
-                    <el-input v-if="isAudit" v-model="auditForm.licensePlate" placeholder="请输入" />
+                    <el-input v-if="isAudit" v-model="auditForm.licensePlate" placeholder="请输入" maxlength="20" @input="auditLicensePlateChange" />
                     <div v-else>{{ info.licensePlate }}</div>
                   </el-form-item>
                 </el-col>
@@ -282,9 +282,15 @@ import { apiDomain } from '@/utils/config'
 export default {
   data() {
     return {
+      defaultMessageObj: {
+        name: '',
+        time: '',
+        address: '',
+        licensePlate: '',
+        ruleType: '',
+        travelMode: ''
+      },
       imgOrigin: apiDomain,
-      defaultMessage:
-        '【姓名】，您于【违法时间】在【违法地点】驾驶【车牌号】非机动车，被电子警察记录了“【违法类型】”的违法行为，请及时接受处理。处理途径：1.xxxx；2.xxx;3xxx;咨询电话：xxxxx。',
       ruleTypeMap: new Map([
         [0, '全部'],
         [1, '闯红灯'],
@@ -307,7 +313,7 @@ export default {
         [3, '无需处理']
       ]),
       travelModeMap: new Map([
-        [undefined, '全部'],
+        [0, '全部'],
         [1, '电动自行车'],
         [2, '三轮车'],
         [3, '手推车'],
@@ -330,7 +336,7 @@ export default {
       count3: 0,
       form: {
         ruleType: 0,
-        verifyedStatus: 1,
+        verifyedStatus: 0,
         handledStatus: 0,
         licensePlateStatus: false
       },
@@ -464,7 +470,7 @@ export default {
       if (!value) {
         this.auditForm = {
           travelMode: 1,
-          message: this.defaultMessage
+          message: ''
         }
       }
     }
@@ -517,6 +523,22 @@ export default {
       this.pageNo = value
       this.getTableData()
     },
+    auditRuleTypeChange(e) {
+      this.defaultMessageObj.ruleType = this.ruleTypeMap.get(e)
+      this.auditForm.message = this.defaultMessage()
+    },
+    auditTravelModeChange(e) {
+      this.defaultMessageObj.travelMode = this.travelModeMap.get(e)
+      this.auditForm.message = this.defaultMessage()
+    },
+    auditLicensePlateChange(e) {
+      this.defaultMessageObj.licensePlate = e
+      this.auditForm.message = this.defaultMessage()
+    },
+    defaultMessage() {
+      const { name, time, address, licensePlate, ruleType, travelMode } = this.defaultMessageObj
+      return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`
+    },
     handleShowDialog(isAudit) {
       // 弹窗展示
       if (!this.selectedRowKey) {
@@ -562,13 +584,20 @@ export default {
                     id: index + 1
                   }))
                 }
-                this.selectedHaikangKey =
-                  data2 && data2.length > 0 ? data2[0].id : 0
+                this.selectedHaikangKey = (data2 && data2.length > 0 ? data2[0].id : 0)
+                this.defaultMessageObj = {
+                  name: this.selectedHaikang.ruleName,
+                  time: this.info.ruleAt,
+                  address: this.info.ruleplace || '',
+                  licensePlate: this.info.licensePlate || '',
+                  ruleType: this.ruleTypeMap.get(data.ruleType || 1), // 违法类型 默认闯红灯
+                  travelMode: this.travelModeMap.get(data.travelMode || 1) // 出行方式 默认电动自行车
+                }
                 this.auditForm = {
-                  ruleType: data.ruleType,
-                  travelMode: data.travelMode || 1,
+                  ruleType: data.ruleType || 1, // 违法类型 默认闯红灯
+                  travelMode: data.travelMode || 1, // 出行方式 默认电动自行车
                   licensePlate: data.licensePlate,
-                  message: data.message || this.defaultMessage
+                  message: this.defaultMessage()
                 }
                 this.dialogVisible = true
                 if (isAudit) {
@@ -591,7 +620,7 @@ export default {
               ruleType: data.ruleType,
               travelMode: data.travelMode || 1,
               licensePlate: data.licensePlate,
-              message: data.message || this.defaultMessage
+              message: data.message || ''
             }
             this.dialogVisible = true
             if (isAudit) {
@@ -754,7 +783,7 @@ export default {
       .similarity-block {
         display: flex;
         flex-wrap: wrap;
-        border: 2px solid #ccc;
+        border: 1px solid #ccc;
         border-right: none;
         border-top: none;
         &-imgDiv {
@@ -763,8 +792,8 @@ export default {
           height: 196px;
           text-align: center;
           cursor: pointer;
-          border-right: 2px solid #ccc;
-          border-top: 2px solid #ccc;
+          border-right: 1px solid #ccc;
+          border-top: 1px solid #ccc;
           img {
             display: block;
             width: 120px;
