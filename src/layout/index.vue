@@ -1,5 +1,6 @@
 <template>
   <div :class="classObj" class="app-wrapper">
+    <div class="topNavBox"><img src="@/assets/navlogo.png">建德市交警大队非机动车智慧管理平台</div>
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
     <sidebar class="sidebar-container" />
     <div class="main-container">
@@ -61,7 +62,7 @@ export default {
     width: 100%;
     &.mobile.openSidebar{
       position: fixed;
-      top: 0;
+      top: 0px;
     }
   }
   .drawer-bg {
