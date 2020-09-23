@@ -1,22 +1,48 @@
 <template>
   <div class="app-container">
-    <div class="ruleType-buttons">
-      <block v-for="[key, value] in ruleTypeMap.entries" :key="key">
+    <div class="table-footer">
+      <div class="table-footer-block">
+        <i class="el-icon-view" />今日采集量：
+        <span>{{ count1 }}</span>
+      </div>
+      <div class="table-footer-block">
+        <i class="el-icon-document-copy" />审核量：
+        <span>{{ count2 }}</span>
+      </div>
+      <div class="table-footer-block">
+        <i class="el-icon-delete" />作废量：
+        <span>{{ count3 }}</span>
+      </div>
+    </div>
+    <!-- <div class="ruleType-buttons">
+      <block v-for="[key, value] in ruleTypeMap.entries()" :key="key">
         <el-button
           :type="form.ruleType === key ? 'primary' : ''"
           @click="selectRuleType(key)"
         >{{ value }}</el-button>
       </block>
-    </div>
-    <el-form ref="form" class="roadposition_form" :model="form" label-width="100px">
+    </div> -->
+    <el-form ref="form" class="roadposition_form" :model="form" label-width="120px">
       <el-row :gutter="20">
         <el-col :span="5">
-          <el-form-item label="违法地点：">
+          <el-form-item label="违法地点">
             <el-input v-model="form.rulePlace" placeholder="请输入" />
           </el-form-item>
         </el-col>
-        <el-col :span="9">
-          <el-form-item label="采集时间：">
+        <el-col :span="5">
+          <el-form-item label="违法类型">
+            <el-select v-model="form.ruleType" placeholder="请选择">
+              <el-option
+                v-for="[key, value] in ruleTypeMap.entries()"
+                :key="key"
+                :label="value"
+                :value="key"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="10">
+          <el-form-item label="采集时间">
             <el-date-picker
               v-model="form.ruleAt"
               type="datetimerange"
@@ -29,12 +55,12 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="5">
-          <el-form-item label="相似度：">
+          <el-form-item label="相似度">
             <el-input v-model="form.similarity" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
-          <el-form-item label="审核状态：">
+          <el-form-item label="审核状态">
             <el-select v-model="form.verifyedStatus" placeholder="请选择">
               <el-option
                 v-for="item in verifyedStatusOptions.searchOptions"
@@ -46,7 +72,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="6">
-          <el-form-item label="当事人处理结果：" label-width="130px">
+          <el-form-item label="当事人处理结果">
             <el-select v-model="form.handledStatus" placeholder="请选择">
               <el-option
                 v-for="item in handledStatusOptions.searchOptions"
@@ -58,7 +84,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="3">
-          <el-form-item label="有无车牌：">
+          <el-form-item label="有无车牌">
             <el-checkbox v-model="form.licensePlateStatus" />
           </el-form-item>
         </el-col>
@@ -82,25 +108,25 @@
           />
         </template>
       </el-table-column>
-      <el-table-column type="index" label="序号" width="150" />
-      <el-table-column prop="createdAt" label="采集时间" width="150" />
-      <el-table-column prop="rulePlace" label="违法地点" width="150" />
-      <el-table-column prop="ruleType" label="违法类型" width="150">
+      <el-table-column type="index" label="序号" width="50" />
+      <el-table-column prop="createdAt" label="采集时间" />
+      <el-table-column prop="rulePlace" label="违法地点" />
+      <el-table-column prop="ruleType" label="违法类型">
         <template slot-scope="scope">{{ ruleTypeMap.get(scope.row.ruleType) }}</template>
       </el-table-column>
-      <el-table-column prop="similarity" label="相似度" width="150" />
-      <el-table-column prop="verifyedStatus" label="审核状态" width="150">
+      <el-table-column prop="similarity" label="相似度" />
+      <el-table-column prop="verifyedStatus" label="审核状态">
         <template
           slot-scope="scope"
         >{{ scope.row.verifyedStatus ? verifyedStatusMap.get(scope.row.verifyedStatus) : '' }}</template>
       </el-table-column>
-      <el-table-column label="当事人处理结果" width="150">
+      <el-table-column label="当事人处理结果">
         <template
           slot-scope="scope"
         >{{ scope.row.handledStatus ? handledStatusMap.get(scope.row.handledStatus) : '' }}</template>
       </el-table-column>
-      <el-table-column prop="verifyedAt" label="审核时间" width="150" />
-      <el-table-column prop="verifyedName" label="审核人" width="150" />
+      <el-table-column prop="verifyedAt" label="审核时间" />
+      <el-table-column prop="verifyedName" label="审核人" />
     </el-table>
     <div class="table_pagination">
       <el-pagination
@@ -110,20 +136,6 @@
         background
         @current-change="handleCurrentChange"
       />
-    </div>
-    <div class="table-footer">
-      <div class="table-footer-block">
-        <i class="el-icon-view" />今日采集量：
-        <span>{{ count1 }}</span>
-      </div>
-      <div class="table-footer-block">
-        <i class="el-icon-document-copy" />审核量：
-        <span>{{ count2 }}</span>
-      </div>
-      <div class="table-footer-block">
-        <i class="el-icon-delete" />作废量：
-        <span>{{ count3 }}</span>
-      </div>
     </div>
     <el-dialog
       class="audit-dialog"
@@ -317,7 +329,7 @@ export default {
       count2: 0,
       count3: 0,
       form: {
-        ruleType: '',
+        ruleType: 0,
         verifyedStatus: 1,
         handledStatus: 0,
         licensePlateStatus: false
@@ -482,14 +494,14 @@ export default {
           this.tableLoading = false
         })
         .catch(() => {
-          this.$message.error('操作失败')
+          this.$message.error('获取违法数据失败')
           this.tableLoading = false
         })
     },
-    selectRuleType(value) {
-      // 查询条件
-      this.form.ruleType = value
-    },
+    // selectRuleType(value) {
+    //   // 查询条件
+    //   this.form.ruleType = value
+    // },
     async handleSearch() {
       // 查询
       this.searchLoading = true
@@ -652,7 +664,10 @@ export default {
 .ruleType-buttons {
   display: flex;
   flex-wrap: wrap;
-  margin: 0 0 20px 20px;
+  margin: 20px 0;
+  .el-button {
+    margin-right: 20px;
+  }
 }
 .btns_box {
   margin-bottom: 20px;
@@ -670,9 +685,15 @@ export default {
 }
 .table-footer {
   display: flex;
-  margin-top: 20px;
+  justify-content: space-between;
+  margin-bottom: 20px;
   &-block {
-    flex: 1;
+    border-radius: 4px;
+    text-align: center;
+    background: rgb(229, 233, 242);
+    line-height: 40px;
+    height: 40px;
+    width: 32%;
     i {
       margin-right: 4px;
     }
