@@ -116,11 +116,7 @@ export default {
         }
       ],
       tableData: [],
-      form: {
-        roadposition: '',
-        road: '',
-        status: 0
-      },
+      form: {},
       searchData: {} // 搜索数据
     }
   },
@@ -228,7 +224,8 @@ export default {
       }
       this.$alert('确认删除？', '系统提示', {
         confirmButtonText: '确定',
-        callback: () => {
+        callback: (type) => {
+          if (type !== 'confirm') return
           axios.delete(`/api/users/${this.selectedRowKey}`).then((res) => {
             this.$message.success('操作成功')
             // 刷新列表

@@ -25,7 +25,7 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="路口名称">
-            <el-input v-model="searchform.roadname" placeholder="请输入路口名称查找" />
+            <el-input v-model="searchform.name" placeholder="请输入路口名称查找" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
@@ -36,7 +36,7 @@
     <el-table
       v-loading="listLoading"
       :data="tableData"
-      style="width: 100%"
+      style="width: 600px"
       border
       @selection-change="handleSelectionChange"
     >
@@ -45,25 +45,19 @@
         width="55"
       />
       <el-table-column
-        prop="date"
-        label="路口方位"
-        width="300"
-      />
-      <el-table-column
         prop="name"
-        label="状态"
-        width="150"
+        label="路口名称"
       />
       <el-table-column
-        prop="address"
-        label="所属路口"
+        prop="num"
+        label="路口方位数"
       />
     </el-table>
     <div class="table_pagination">
       <el-pagination
         background
         layout="prev, pager, next"
-        :total="1000"
+        :total="paginationTotal"
         :page-size="10"
         @current-change="currentChange"
       />
@@ -84,23 +78,9 @@ export default {
       listLoading: false,
       saveLoading: false,
       multipleSelection: [], // 选择的行
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }],
+      tableData: [],
+      currentPage: 1,
+      paginationTotal: 0,
       selectedRoadArray: [
         {
           id: 1,
@@ -111,11 +91,7 @@ export default {
           name: '北京'
         }
       ],
-      form: {
-        roadposition: '',
-        road: '',
-        status: 0
-      },
+      form: {},
       searchform: {},
       searchData: {} // 搜索数据
     }
@@ -125,38 +101,36 @@ export default {
   },
   methods: {
     getTableData(pageNumber) {
-      // console.log({...this.searchData})
-      // axios.post('/get_sys_stat').then((res) => {
-      //   this.form.big_cam_stat = res.data.big_cam_stat
-      //   this.form.middle_cam_stat = res.data.middle_cam_stat
-      // }).catch((a) => {
-      //   this.$message({
-      //     message: '获取数据异常',
-      //     type: 'error'
-      //   })
-      // })
       this.listLoading = true
-      // console.log(e)
-      setTimeout(() => {
+      axios.post('/api/crossings/search', {
+        pageNo: pageNumber,
+        pageSize: 10,
+        type: 2,
+        ...this.searchData
+      }).then((res) => {
         this.listLoading = false
-      }, 500)
-    },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+        this.tableData = res.data.data
+        this.paginationTotal = res.data.totalCount
+      }).catch(() => {
+        this.listLoading = false
+        this.$message({
+          message: '获取数据异常',
+          type: 'error'
+        })
+      })
     },
     currentChange(pageNumber) {
       this.getTableData(pageNumber)
     },
-    removeSelectedRoad(index) {
-      console.log(index)
-    },
     onSearch() {
-      this.searchData = this.form
+      this.searchData = this.searchform
       this.getTableData(1)
     },
-    handleClick(type) {
-      console.log(type)
-      console.log(this.multipleSelection)
+    handleSelectionChange(val) {
+      this.multipleSelection = val
+    },
+    removeSelectedRoad(index) {
+      console.log(index)
     },
     doSubmit() {
       this.saveLoading = true
