@@ -4,22 +4,17 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="派出所名称">
-            <el-input v-model="form.name" placeholder="请输入" />
+            <el-input v-model="form.policeStationName" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="负责路口名称">
-            <el-input v-model="form.roadposition" placeholder="请输入" />
+            <el-input v-model="form.roadposition1111" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="所属地区">
-            <el-input v-model="form.road" placeholder="请输入" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="5">
-          <el-form-item label="路口数">
-            <el-input v-model="form.road" placeholder="请输入" />
+            <el-input v-model="form.region" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
@@ -28,8 +23,8 @@
       </el-row>
     </el-form>
     <el-row class="btns_box">
-      <el-button @click="handleClick('start')">新建</el-button>
-      <el-button @click="handleClick('stop')">修改</el-button>
+      <el-button @click="handleClick('add')">新建</el-button>
+      <el-button @click="handleClick('update')">修改</el-button>
       <el-button @click="handleClickDel">删除</el-button>
     </el-row>
     <el-table
@@ -42,14 +37,14 @@
         <template slot-scope="scope">
           <el-radio
             class="selectRow-radio"
-            :label="scope.row.id"
+            :label="scope.row.policeStationId"
             :value="selectedRowKey"
-            @change="handleSelectRow(scope.row.id)"
+            @change="handleSelectRow(scope.row.policeStationId)"
           />
         </template>
       </el-table-column>
       <el-table-column
-        prop="name"
+        prop="policeStationName"
         label="派出所名称"
       />
       <el-table-column
@@ -57,11 +52,11 @@
         label="所属地区"
       />
       <el-table-column
-        prop="address"
+        prop="address111"
         label="负责路口名称"
       />
       <el-table-column
-        prop="address1"
+        prop="crossingPointNum"
         label="路口数"
       />
     </el-table>
@@ -127,7 +122,27 @@ export default {
       this.getTableData(1)
     },
     handleClick(type) {
-      console.log(type)
+      if (type === 'add') {
+        this.$router.push({
+          path: '/police/add'
+        })
+      } else {
+        if (!this.selectedRowKey) {
+          this.$message({
+            message: '请先选择一条数据',
+            type: 'error'
+          })
+          return
+        }
+        const { policeStationName, policeStationId } = this.tableData.filter((item) => item.policeStationId === this.selectedRowKey)[0]
+        this.$router.push({
+          path: '/police/add',
+          query: {
+            policeStationId,
+            policeStationName
+          }
+        })
+      }
     },
     handleClickDel() {
       if (!this.selectedRowKey) {

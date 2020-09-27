@@ -4,17 +4,17 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="路口方位">
-            <el-input v-model="form.roadposition" placeholder="请输入" />
+            <el-input v-model="form.crossingPointName" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="所属路口">
-            <el-input v-model="form.road" placeholder="请输入" />
+            <el-input v-model="form.crossingName" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="状态">
-            <el-select v-model="form.status" placeholder="请选择">
+            <el-select v-model="form.crossingPointStatus" placeholder="请选择">
               <el-option
                 v-for="item in statusOptions"
                 :key="item.value"
@@ -45,28 +45,28 @@
         <template slot-scope="scope">
           <el-radio
             class="selectRow-radio"
-            :label="scope.row.id"
+            :label="scope.row.crossingPointId"
             :value="selectedRowKey"
-            @change="handleSelectRow(scope.row.id)"
+            @change="handleSelectRow(scope.row.crossingPointId)"
           />
         </template>
       </el-table-column>
       <el-table-column
-        prop="name"
+        prop="crossingPointName"
         label="路口方位"
       />
       <el-table-column
-        prop="status"
+        prop="crossingPointStatus"
         label="状态"
       >
         <template slot-scope="scope">
-          <div v-if="scope.row.status === 2">启用</div>
-          <div v-if="scope.row.status === 1">禁用</div>
-          <div v-if="scope.row.status === 3">维修</div>
+          <div v-if="scope.row.crossingPointStatus === 2">启用</div>
+          <div v-if="scope.row.crossingPointStatus === 1">禁用</div>
+          <div v-if="scope.row.crossingPointStatus === 3">维修</div>
         </template>
       </el-table-column>
       <el-table-column
-        prop="cid"
+        prop="crossingData.crossingName"
         label="所属路口"
       />
     </el-table>
@@ -158,12 +158,13 @@ export default {
         return
       }
       if (type === 'href') {
-        const { name } = this.tableData.filter((item) => item.id === this.selectedRowKey)[0]
+        const { crossingPointName, crossingPointId } = this.tableData.filter((item) => item.crossingPointId === this.selectedRowKey)[0]
         this.$router.push({
           path: '/road/add',
           query: {
-            id: this.selectedRowKey,
-            name
+            // id: this.selectedRowKey,
+            crossingPointId,
+            crossingPointName
           }
         })
       } else {
@@ -173,8 +174,8 @@ export default {
           service: 3
         }
         axios.put('/api/crossingpoints ', {
-          id: this.selectedRowKey,
-          status: statusObj[type]
+          crossingPointId: this.selectedRowKey,
+          crossingPointStatus: statusObj[type]
         }).then((res) => {
           this.$message.success('操作成功')
           this.selectedRowKey = null

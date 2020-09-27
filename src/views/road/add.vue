@@ -4,13 +4,13 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="路口名称">
-            <el-input v-model="form.name" placeholder="请设置路口名称" />
+            <el-input v-model="form.crossingName" placeholder="请设置路口名称" />
           </el-form-item>
         </el-col>
       </el-row>
       <el-row>
         <el-form-item label="已选择路口方位">
-          <div v-for="(item, index) of selectedRoadArray" :key="item.name" class="selectedRoad">{{ item.name }}<i class="selectedRoadClear el-icon-circle-close" @click="removeSelectedRoad(index)" /></div>
+          <div v-for="(item, index) of selectedRoadArray" :key="item.crossingPointName" class="selectedRoad">{{ item.crossingPointName }}<i class="selectedRoadClear el-icon-circle-close" @click="removeSelectedRoad(index)" /></div>
         </el-form-item>
       </el-row>
     </el-form>
@@ -18,7 +18,7 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="路口方位">
-            <el-input v-model="searchform.roadname" placeholder="请输入路口方位查找" />
+            <el-input v-model="searchform.crossingPointName" placeholder="请输入路口方位查找" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
@@ -29,34 +29,39 @@
     <el-table
       v-loading="listLoading"
       :data="tableData"
-      style="width: 100%"
+      style="width: 600px"
       border
-      @selection-change="handleSelectionChange"
     >
+      <el-table-column label="操作" width="50">
+        <template slot-scope="scope">
+          <el-checkbox
+            :key="scope.row.crossingPointId"
+            class="selectRow-checkbox"
+            :checked="((multipleSelection[scope.row.crossingPointId] || {}).value || false)"
+            @change="(e) => handleSelectionChange(e, scope.row)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
-        type="selection"
-        width="55"
-      />
-      <el-table-column
-        prop="date"
+        prop="crossingPointName"
         label="路口方位"
-        width="300"
       />
       <el-table-column
-        prop="name"
+        prop="crossingPointStatus"
         label="状态"
-        width="150"
-      />
-      <el-table-column
-        prop="address"
-        label="所属路口"
-      />
+      >
+        <template slot-scope="scope">
+          <div v-if="scope.row.crossingPointStatus === 2">启用</div>
+          <div v-if="scope.row.crossingPointStatus === 1">禁用</div>
+          <div v-if="scope.row.crossingPointStatus === 3">维修</div>
+        </template>
+      </el-table-column>
     </el-table>
     <div class="table_pagination">
       <el-pagination
         background
         layout="prev, pager, next"
-        :total="1000"
+        :total="paginationTotal"
         :page-size="10"
         @current-change="currentChange"
       />
@@ -69,93 +74,162 @@
 
 <script>
 import axios from '@/utils/request'
-console.log(axios)
 
 export default {
   data() {
     return {
+      crossingId: null, // 修改时候有id
       listLoading: false,
+      currentPage: 1,
+      paginationTotal: 0,
+      tableData: [],
       saveLoading: false,
-      multipleSelection: [], // 选择的行
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }],
-      selectedRoadArray: [
-        {
-          id: 1,
-          name: '上海市'
-        },
-        {
-          id: 2,
-          name: '北京'
-        }
-      ],
+      multipleSelection: {}, // 选择的行
+      selectedRoadArray: [],
       form: {
-        roadposition: '',
-        road: '',
-        status: 0
+        crossingName: ''
       },
       searchform: {},
       searchData: {} // 搜索数据
     }
   },
   mounted: function() {
+    const { crossingId, crossingPointName, crossingPointId } = this.$route.query
     this.getTableData(1)
+    // 修改页面, 回填之前的数据
+    if (crossingId) {
+      // 修改
+      axios.get(`/api/crossings/${crossingId}`).then((res) => {
+        const { crossingName, crossingId, crossingPointData } = res.data
+        this.crossingId = crossingId
+        this.form.crossingName = crossingName
+        if (crossingPointData && crossingPointData.length > 0) {
+          this.selectedRoadArray = crossingPointData
+          crossingPointData.forEach((item) => {
+            this.multipleSelection[item.crossingPointId] = {
+              value: true,
+              crossingPointId: item.crossingPointId,
+              crossingPointName: item.crossingPointName
+            }
+          })
+        }
+      }).catch((e) => {
+        // this.listLoading = false
+        this.$message.error(e.response.data.returnMessage || '获取数据异常')
+      })
+    } else if (crossingPointName) {
+      // 从路口方位跳转过来的
+      this.selectedRoadArray = [{
+        crossingPointId,
+        crossingPointName
+      }]
+      this.multipleSelection[crossingPointId] = {
+        value: true,
+        crossingPointId,
+        crossingPointName
+      }
+    }
   },
   methods: {
     getTableData(pageNumber) {
-      // console.log({...this.searchData})
-      // axios.post('/get_sys_stat').then((res) => {
-      //   this.form.big_cam_stat = res.data.big_cam_stat
-      //   this.form.middle_cam_stat = res.data.middle_cam_stat
-      // }).catch((a) => {
-      //   this.$message({
-      //     message: '获取数据异常',
-      //     type: 'error'
-      //   })
-      // })
       this.listLoading = true
-      // console.log(e)
-      setTimeout(() => {
+      axios.post('/api/crossingpoints/search', {
+        pageNo: pageNumber,
+        pageSize: 10,
+        type: 2,
+        ...this.searchData
+      }).then((res) => {
         this.listLoading = false
-      }, 500)
-    },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+        this.tableData = res.data.data
+        this.paginationTotal = res.data.totalCount
+      }).catch((a) => {
+        this.listLoading = false
+        this.$message({
+          message: '获取数据异常',
+          type: 'error'
+        })
+      })
     },
     currentChange(pageNumber) {
       this.getTableData(pageNumber)
     },
-    removeSelectedRoad(index) {
-      console.log(index)
-    },
     onSearch() {
-      this.searchData = this.form
+      this.searchData = this.searchform
       this.getTableData(1)
     },
-    handleClick(type) {
-      console.log(type)
-      console.log(this.multipleSelection)
+    handleSelectionChange(val, row) {
+      // console.log({...row})
+      if (!this.multipleSelection[row.crossingPointId]) {
+        this.multipleSelection[row.crossingPointId] = {}
+      }
+      // console.log(val)
+      Object.assign(this.multipleSelection[row.crossingPointId], {
+        value: val,
+        ...row
+      })
+      // 先清空
+      this.selectedRoadArray = []
+      for (const key in this.multipleSelection) {
+        const { crossingPointId, crossingPointName, value } = this.multipleSelection[key] || {}
+        if (value) {
+          this.selectedRoadArray.push({
+            crossingPointId,
+            crossingPointName
+          })
+        }
+      }
+    },
+    removeSelectedRoad(index) {
+      const { crossingPointId } = this.selectedRoadArray[index]
+      this.selectedRoadArray.splice(index, 1)
+      this.multipleSelection[crossingPointId].value = false
+      const tableData = this.tableData
+      this.tableData = []
+      setTimeout(() => {
+        this.tableData = tableData
+      })
     },
     doSubmit() {
+      const { crossingName } = this.form
+      if (!crossingName) {
+        this.$message.error('请先输入路口名称')
+        return
+      }
+      if (this.selectedRoadArray.length <= 0) {
+        this.$message.error('请先选择路口方位')
+        return
+      }
+      const crossingPointId = this.selectedRoadArray.map(({ crossingPointId }) => crossingPointId)
+      let reqObj = {}
+      if (this.crossingId) {
+        // 修改
+        reqObj = {
+          crossingId: this.crossingId,
+          crossingPointId
+        }
+      } else {
+        // 新增
+        reqObj = {
+          crossingName,
+          crossingPointId
+        }
+      }
       this.saveLoading = true
-      setTimeout(() => {
+      axios.post('/api/crossing', reqObj).then((res) => {
         this.saveLoading = false
-      }, 500)
+        this.$message({
+          message: '操作成功',
+          type: 'success',
+          duration: 1000,
+          onClose: () => {
+            location.reload()
+          }
+        })
+        console.log(res)
+      }).catch((e) => {
+        this.saveLoading = false
+        this.$message.error(e.response.data.returnMessage || '操作失败')
+      })
     }
   }
 }
@@ -189,5 +263,15 @@ export default {
 }
 .savebtn {
   margin-top: 20px;
+}
+</style>
+<style lang="scss">
+.selectRow-checkbox {
+  .el-checkbox__input {
+    margin-left: 7px;
+  }
+  .el-checkbox__label {
+    display: none;
+  }
 }
 </style>

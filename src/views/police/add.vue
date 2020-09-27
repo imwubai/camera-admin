@@ -4,20 +4,20 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="派出所名称">
-            <el-input v-model="form.name" placeholder="请设置派出所名称" />
+            <el-input v-model="form.policeStationName" placeholder="请设置派出所名称" />
           </el-form-item>
         </el-col>
       </el-row>
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="所属地区">
-            <el-input v-model="form.name1" placeholder="请选择" />
+            <el-input v-model="form.region" placeholder="请选择" />
           </el-form-item>
         </el-col>
       </el-row>
       <el-row>
         <el-form-item label="已选择路口">
-          <div v-for="(item, index) of selectedRoadArray" :key="item.name" class="selectedRoad">{{ item.name }}<i class="selectedRoadClear el-icon-circle-close" @click="removeSelectedRoad(index)" /></div>
+          <div v-for="(item, index) of selectedRoadArray" :key="item.crossingName" class="selectedRoad">{{ item.crossingName }}<i class="selectedRoadClear el-icon-circle-close" @click="removeSelectedRoad(index)" /></div>
         </el-form-item>
       </el-row>
     </el-form>
@@ -25,7 +25,7 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="路口名称">
-            <el-input v-model="searchform.name" placeholder="请输入路口名称查找" />
+            <el-input v-model="searchform.crossingName" placeholder="请输入路口名称查找" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
@@ -38,18 +38,23 @@
       :data="tableData"
       style="width: 600px"
       border
-      @selection-change="handleSelectionChange"
     >
+      <el-table-column label="操作" width="50">
+        <template slot-scope="scope">
+          <el-checkbox
+            :key="scope.row.crossingId"
+            class="selectRow-checkbox"
+            :checked="((multipleSelection[scope.row.crossingId] || {}).value || false)"
+            @change="(e) => handleSelectionChange(e, scope.row)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
-        type="selection"
-        width="55"
-      />
-      <el-table-column
-        prop="name"
+        prop="crossingName"
         label="路口名称"
       />
       <el-table-column
-        prop="num"
+        prop="crossingPointNum"
         label="路口方位数"
       />
     </el-table>
@@ -70,34 +75,59 @@
 
 <script>
 import axios from '@/utils/request'
-console.log(axios)
 
 export default {
   data() {
     return {
       listLoading: false,
       saveLoading: false,
-      multipleSelection: [], // 选择的行
       tableData: [],
       currentPage: 1,
       paginationTotal: 0,
-      selectedRoadArray: [
-        {
-          id: 1,
-          name: '上海市'
-        },
-        {
-          id: 2,
-          name: '北京'
-        }
-      ],
-      form: {},
+      multipleSelection: {}, // 选择的行
+      selectedRoadArray: [],
+      form: {
+        policeStationName: ''
+      },
       searchform: {},
       searchData: {} // 搜索数据
     }
   },
   mounted: function() {
+    const { policeStationId, crossingName, crossingId } = this.$route.query
     this.getTableData(1)
+    // 修改页面, 回填之前的数据
+    if (policeStationId) {
+      // 修改
+      axios.get(`/api/policestations/${policeStationId}`).then((res) => {
+        const { policeStationName, policeStationId, crossingData } = res.data
+        this.policeStationId = policeStationId
+        this.form.policeStationName = policeStationName
+        if (crossingData && crossingData.length > 0) {
+          this.selectedRoadArray = crossingData
+          crossingData.forEach((item) => {
+            this.multipleSelection[item.policeStationId] = {
+              value: true,
+              policeStationId: item.policeStationId,
+              policeStationName: item.policeStationName
+            }
+          })
+        }
+      }).catch((e) => {
+        this.$message.error(e.response.data.returnMessage || '获取数据异常')
+      })
+    } else if (crossingName) {
+      // 从路口列表跳转过来的
+      this.selectedRoadArray = [{
+        crossingId,
+        crossingName
+      }]
+      this.multipleSelection[crossingId] = {
+        value: true,
+        crossingId,
+        crossingName
+      }
+    }
   },
   methods: {
     getTableData(pageNumber) {
@@ -126,17 +156,78 @@ export default {
       this.searchData = this.searchform
       this.getTableData(1)
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+    handleSelectionChange(val, row) {
+      if (!this.multipleSelection[row.crossingId]) {
+        this.multipleSelection[row.crossingId] = {}
+      }
+      // console.log(val)
+      Object.assign(this.multipleSelection[row.crossingId], {
+        value: val,
+        ...row
+      })
+      // 先清空
+      this.selectedRoadArray = []
+      for (const key in this.multipleSelection) {
+        const { crossingId, crossingName, value } = this.multipleSelection[key] || {}
+        if (value) {
+          this.selectedRoadArray.push({
+            crossingId,
+            crossingName
+          })
+        }
+      }
     },
     removeSelectedRoad(index) {
-      console.log(index)
+      const { crossingId } = this.selectedRoadArray[index]
+      this.selectedRoadArray.splice(index, 1)
+      this.multipleSelection[crossingId].value = false
+      const tableData = this.tableData
+      this.tableData = []
+      setTimeout(() => {
+        this.tableData = tableData
+      })
     },
     doSubmit() {
+      const { policeStationName } = this.form
+      if (!policeStationName) {
+        this.$message.error('请先输入派出所名称')
+        return
+      }
+      if (this.selectedRoadArray.length <= 0) {
+        this.$message.error('请先选择路口')
+        return
+      }
+      // 已选择的路口id集合
+      const crossingId = this.selectedRoadArray.map(({ crossingId }) => crossingId)
+      let reqObj = {}
+      if (this.policeStationId) {
+        // 修改
+        reqObj = {
+          policeStationId: this.policeStationId,
+          crossingId
+        }
+      } else {
+        // 新增
+        reqObj = {
+          policeStationName,
+          crossingId
+        }
+      }
       this.saveLoading = true
-      setTimeout(() => {
+      axios.post('/api/policestation', reqObj).then((res) => {
         this.saveLoading = false
-      }, 500)
+        this.$message({
+          message: '操作成功',
+          type: 'success',
+          duration: 1000,
+          onClose: () => {
+            location.reload()
+          }
+        })
+      }).catch((e) => {
+        this.saveLoading = false
+        this.$message.error(e.response.data.returnMessage || '操作失败')
+      })
     }
   }
 }
