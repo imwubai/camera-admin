@@ -201,36 +201,48 @@ export default {
         return
       }
       const crossingPointId = this.selectedRoadArray.map(({ crossingPointId }) => crossingPointId)
-      let reqObj = {}
+      this.saveLoading = true
       if (this.crossingId) {
         // 修改
-        reqObj = {
+        axios.put('/api/crossings', {
           crossingId: this.crossingId,
           crossingPointId
-        }
+        }).then((res) => {
+          this.saveLoading = false
+          this.$message({
+            message: '操作成功',
+            type: 'success',
+            duration: 1000,
+            onClose: () => {
+              location.reload()
+            }
+          })
+          console.log(res)
+        }).catch((e) => {
+          this.saveLoading = false
+          this.$message.error(e.response.data.returnMessage || '操作失败')
+        })
       } else {
         // 新增
-        reqObj = {
+        axios.post('/api/crossings', {
           crossingName,
           crossingPointId
-        }
-      }
-      this.saveLoading = true
-      axios.post('/api/crossing', reqObj).then((res) => {
-        this.saveLoading = false
-        this.$message({
-          message: '操作成功',
-          type: 'success',
-          duration: 1000,
-          onClose: () => {
-            location.reload()
-          }
+        }).then((res) => {
+          this.saveLoading = false
+          this.$message({
+            message: '操作成功',
+            type: 'success',
+            duration: 1000,
+            onClose: () => {
+              location.reload()
+            }
+          })
+          console.log(res)
+        }).catch((e) => {
+          this.saveLoading = false
+          this.$message.error(e.response.data.returnMessage || '操作失败')
         })
-        console.log(res)
-      }).catch((e) => {
-        this.saveLoading = false
-        this.$message.error(e.response.data.returnMessage || '操作失败')
-      })
+      }
     }
   }
 }
