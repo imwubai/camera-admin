@@ -136,6 +136,7 @@ export default {
         pageNo: pageNumber,
         pageSize: 10,
         type: 2,
+        policeStationName: '无',
         ...this.searchData
       }).then((res) => {
         this.listLoading = false

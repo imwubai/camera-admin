@@ -137,6 +137,7 @@ export default {
         pageNo: pageNumber,
         pageSize: 10,
         type: 2,
+        crossingName: '无',
         ...this.searchData
       }).then((res) => {
         this.listLoading = false
