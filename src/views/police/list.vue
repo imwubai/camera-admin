@@ -100,7 +100,6 @@ export default {
       axios.post('/api/policestations/search', {
         pageNo: pageNumber,
         pageSize: 10,
-        type: 2,
         ...this.searchData
       }).then((res) => {
         this.listLoading = false

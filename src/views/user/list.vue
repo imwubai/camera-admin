@@ -51,9 +51,9 @@
         <template slot-scope="scope">
           <el-radio
             class="selectRow-radio"
-            :label="scope.row.id"
+            :label="scope.row.userId"
             :value="selectedRowKey"
-            @change="handleSelectRow(scope.row.id)"
+            @change="handleSelectRow(scope.row.userId)"
           />
         </template>
       </el-table-column>
@@ -62,8 +62,8 @@
         label="用户名"
       />
       <el-table-column
-        prop="所属派出所"
-        label="psid"
+        prop="policeStationName"
+        label="所属派出所"
       />
       <el-table-column
         prop="telephone"
@@ -167,11 +167,11 @@ export default {
         })
         return
       }
-      const { username } = this.tableData.filter((item) => item.id === this.selectedRowKey)[0]
+      const { username, userId } = this.tableData.filter((item) => item.userId === this.selectedRowKey)[0]
       this.$router.push({
         path: '/user/add',
         query: {
-          id: this.selectedRowKey,
+          userId,
           username: username
         }
       })
@@ -185,7 +185,7 @@ export default {
         return
       }
       axios.put('/api/users', {
-        id: this.selectedRowKey,
+        userId: this.selectedRowKey,
         status: 2
       }).then((res) => {
         this.$message.success('操作成功')
@@ -204,7 +204,7 @@ export default {
         return
       }
       axios.put('/api/users', {
-        id: this.selectedRowKey,
+        userId: this.selectedRowKey,
         status: 1
       }).then((res) => {
         this.$message.success('操作成功')

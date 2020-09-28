@@ -136,6 +136,7 @@ export default {
         pageNo: pageNumber,
         pageSize: 10,
         type: 2,
+        policeStationName: '无',
         ...this.searchData
       }).then((res) => {
         this.listLoading = false
@@ -199,35 +200,46 @@ export default {
       }
       // 已选择的路口id集合
       const crossingId = this.selectedRoadArray.map(({ crossingId }) => crossingId)
-      let reqObj = {}
+      this.saveLoading = true
       if (this.policeStationId) {
         // 修改
-        reqObj = {
+        axios.put('/api/policestations', {
           policeStationId: this.policeStationId,
           crossingId
-        }
+        }).then((res) => {
+          this.saveLoading = false
+          this.$message({
+            message: '操作成功',
+            type: 'success',
+            duration: 1000,
+            onClose: () => {
+              location.reload()
+            }
+          })
+        }).catch((e) => {
+          this.saveLoading = false
+          this.$message.error(e.response.data.returnMessage || '操作失败')
+        })
       } else {
         // 新增
-        reqObj = {
+        axios.post('/api/policestations', {
           policeStationName,
           crossingId
-        }
-      }
-      this.saveLoading = true
-      axios.post('/api/policestation', reqObj).then((res) => {
-        this.saveLoading = false
-        this.$message({
-          message: '操作成功',
-          type: 'success',
-          duration: 1000,
-          onClose: () => {
-            location.reload()
-          }
+        }).then((res) => {
+          this.saveLoading = false
+          this.$message({
+            message: '操作成功',
+            type: 'success',
+            duration: 1000,
+            onClose: () => {
+              location.reload()
+            }
+          })
+        }).catch((e) => {
+          this.saveLoading = false
+          this.$message.error(e.response.data.returnMessage || '操作失败')
         })
-      }).catch((e) => {
-        this.saveLoading = false
-        this.$message.error(e.response.data.returnMessage || '操作失败')
-      })
+      }
     }
   }
 }

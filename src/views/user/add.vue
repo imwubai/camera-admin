@@ -10,13 +10,13 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-form-item label="所属派出所">
-            <el-select v-model="form.psid" placeholder="请选择" filterable>
+          <el-form-item label="所属派出所" prop="policeStationId">
+            <el-select v-model="form.policeStationId" placeholder="请选择" filterable>
               <el-option
-                v-for="item in statusOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+                v-for="item in policeStationNameOptions"
+                :key="item.policeStationId"
+                :label="item.policeStationName"
+                :value="item.policeStationId"
               />
             </el-select>
           </el-form-item>
@@ -63,10 +63,18 @@ export default {
         callback()
       }
     }
+    const validatePoliceStation = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error('请输入必填项'))
+      } else {
+        callback()
+      }
+    }
     const validatePhone = (rule, value, callback) => {
       /* eslint-disable eqeqeq */
       const reg = /^1\d{10}$/
       if (!value) {
+        callback()
         // callback(new Error('请输入必填项'))
       } else if (!reg.test(value)) {
         callback(new Error('手机号输入不合规范'))
@@ -77,53 +85,50 @@ export default {
     return {
       saveLoading: false,
       isUpdate: false, // 是否是修改模式
-      id: '', // 修改用户的id
+      userId: '', // 修改用户的id
       formRules: {
         username: [
           { required: true, trigger: 'change', validator: validateInput }
         ],
         telephone: [
           { trigger: 'change', validator: validatePhone }
+        ],
+        policeStationId: [
+          { required: true, trigger: 'change', validator: validatePoliceStation }
         ]
       },
-      statusOptions: [
-        {
-          value: 0,
-          label: '全部'
-        },
-        {
-          value: 1,
-          label: '启用'
-        },
-        {
-          value: 2,
-          label: '禁用'
-        }
-      ],
+      policeStationNameOptions: [],
       form: {
         username: '',
-        psid: '',
+        policeStationId: '',
         telephone: '',
         password: ''
       }
     }
   },
   mounted: function() {
-    const { username, id } = this.$route.query
+    const { username, userId } = this.$route.query
+    // 获取派出所列表
+    axios.post('/api/policestations/search', {
+      pageNo: 1,
+      pageSize: 100
+    }).then((res) => {
+      this.policeStationNameOptions = res.data.data
+    }).catch(() => {
+      this.$message({
+        message: '获取派出所数据异常',
+        type: 'error'
+      })
+    })
     if (username) {
       this.isUpdate = true
-      this.id = id
-      axios.post('/api/users/search', {
-        pageNo: 1,
-        pageSize: 10,
-        type: 2,
-        username
-      }).then((res) => {
-        const { username, telephone, psid } = res.data.data[0]
+      this.userId = userId
+      axios.get(`/api/users/${userId}`).then((res) => {
+        const { username, telephone, policeStationId } = res.data
         Object.assign(this.form, {
           username,
           telephone,
-          psid
+          policeStationId
         })
       }).catch((a) => {
         this.$message({
@@ -140,7 +145,7 @@ export default {
           this.saveLoading = true
           if (this.isUpdate) {
             axios.put('/api/users', {
-              id: this.id,
+              userId: this.userId,
               ...this.form
             }).then((res) => {
               this.saveLoading = false
