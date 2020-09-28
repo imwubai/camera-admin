@@ -124,8 +124,7 @@ export default {
       this.isUpdate = true
       this.userId = userId
       axios.get(`/api/users/${userId}`).then((res) => {
-        console.log(res)
-        const { username, telephone, policeStationId } = res.data.data[0]
+        const { username, telephone, policeStationId } = res.data
         Object.assign(this.form, {
           username,
           telephone,
