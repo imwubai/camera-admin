@@ -11,7 +11,14 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="所属地区">
-            <el-input v-model="form.region" placeholder="请选择" />
+            <el-select v-model="form.region" placeholder="请选择">
+              <el-option
+                v-for="item in statusOptions"
+                :key="item.regionName"
+                :label="item.regionName"
+                :value="item.regionName"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
       </el-row>
@@ -86,8 +93,10 @@ export default {
       paginationTotal: 0,
       multipleSelection: {}, // 选择的行
       selectedRoadArray: [],
+      statusOptions: [], // 所属地区数据
       form: {
-        policeStationName: ''
+        policeStationName: '',
+        region: '' // 所属地区
       },
       searchform: {},
       searchData: {} // 搜索数据
@@ -96,20 +105,27 @@ export default {
   mounted: function() {
     const { policeStationId, crossingName, crossingId } = this.$route.query
     this.getTableData(1)
+    // 获取所属地区
+    axios.get('/api/regions').then((res) => {
+      this.statusOptions = res.data
+    }).catch(() => {
+      this.$message.error('获取所属地区失败')
+    })
     // 修改页面, 回填之前的数据
     if (policeStationId) {
       // 修改
       axios.get(`/api/policestations/${policeStationId}`).then((res) => {
-        const { policeStationName, policeStationId, crossingData } = res.data
+        const { policeStationName, policeStationId, crossingData, region } = res.data
         this.policeStationId = policeStationId
         this.form.policeStationName = policeStationName
+        this.form.region = region
         if (crossingData && crossingData.length > 0) {
           this.selectedRoadArray = crossingData
           crossingData.forEach((item) => {
-            this.multipleSelection[item.policeStationId] = {
+            this.multipleSelection[item.crossingId] = {
               value: true,
-              policeStationId: item.policeStationId,
-              policeStationName: item.policeStationName
+              crossingId: item.crossingId,
+              crossingName: item.crossingName
             }
           })
         }
@@ -189,9 +205,13 @@ export default {
       })
     },
     doSubmit() {
-      const { policeStationName } = this.form
+      const { policeStationName, region } = this.form
       if (!policeStationName) {
         this.$message.error('请先输入派出所名称')
+        return
+      }
+      if (!region) {
+        this.$message.error('请先选择所属地区')
         return
       }
       if (this.selectedRoadArray.length <= 0) {
@@ -205,6 +225,7 @@ export default {
         // 修改
         axios.put('/api/policestations', {
           policeStationId: this.policeStationId,
+          region,
           crossingId
         }).then((res) => {
           this.saveLoading = false
@@ -222,8 +243,9 @@ export default {
         })
       } else {
         // 新增
-        axios.post('/api/policestations', {
+        axios.post('/api/policestation', {
           policeStationName,
+          region,
           crossingId
         }).then((res) => {
           this.saveLoading = false

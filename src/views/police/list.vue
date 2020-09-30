@@ -9,12 +9,19 @@
         </el-col>
         <el-col :span="5">
           <el-form-item label="负责路口名称">
-            <el-input v-model="form.roadposition1111" placeholder="请输入" />
+            <el-input v-model="form.crossingName" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
           <el-form-item label="所属地区">
-            <el-input v-model="form.region" placeholder="请输入" />
+            <el-select v-model="form.region" placeholder="请选择">
+              <el-option
+                v-for="item in statusOptions"
+                :key="item.regionName"
+                :label="item.regionName"
+                :value="item.regionName"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="4">
@@ -52,9 +59,13 @@
         label="所属地区"
       />
       <el-table-column
-        prop="address111"
+        prop="crossingName"
         label="负责路口名称"
-      />
+      >
+        <template slot-scope="scope">
+          <div v-if="scope.row.crossingData.length > 0">{{ renderCrossingName(scope.row.crossingData) }}</div>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="crossingPointNum"
         label="路口数"
@@ -78,6 +89,7 @@ import axios from '@/utils/request'
 export default {
   data() {
     return {
+      statusOptions: [],
       listLoading: false,
       currentPage: 1,
       paginationTotal: 0,
@@ -89,14 +101,31 @@ export default {
   },
   mounted: function() {
     this.getTableData(1)
+    axios.get('/api/regions').then((res) => {
+      this.statusOptions = res.data
+      // 第一个追加全部
+      this.statusOptions.unshift({
+        regionId: 0,
+        regionName: '全部'
+      })
+    }).catch(() => {
+      this.$message.error('获取所属地区失败')
+    })
   },
   methods: {
+    renderCrossingName(crossingData) {
+      const crossingNameArray = crossingData.map(({ crossingName }) => crossingName)
+      return crossingNameArray.join('、')
+    },
     handleSelectRow(value) {
       // 单选
       this.selectedRowKey = value
     },
     getTableData(pageNumber) {
       this.listLoading = true
+      if (this.searchData.region === '全部') {
+        delete this.searchData.region
+      }
       axios.post('/api/policestations/search', {
         pageNo: pageNumber,
         pageSize: 10,

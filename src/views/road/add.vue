@@ -217,14 +217,13 @@ export default {
               location.reload()
             }
           })
-          console.log(res)
         }).catch((e) => {
           this.saveLoading = false
           this.$message.error(e.response.data.returnMessage || '操作失败')
         })
       } else {
         // 新增
-        axios.post('/api/crossings', {
+        axios.post('/api/crossing', {
           crossingName,
           crossingPointId
         }).then((res) => {

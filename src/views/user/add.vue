@@ -31,7 +31,10 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-form-item label="密码">
+          <el-form-item v-if="userId" label="密码">
+            <el-input v-model="form.password" placeholder="请输入密码" maxlength="20" />
+          </el-form-item>
+          <el-form-item v-else label="密码" prop="password">
             <el-input v-model="form.password" placeholder="请输入密码" maxlength="20" />
           </el-form-item>
         </el-col>
@@ -70,6 +73,13 @@ export default {
         callback()
       }
     }
+    const validatePassword = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error('请输入必填项'))
+      } else {
+        callback()
+      }
+    }
     const validatePhone = (rule, value, callback) => {
       /* eslint-disable eqeqeq */
       const reg = /^1\d{10}$/
@@ -95,6 +105,9 @@ export default {
         ],
         policeStationId: [
           { required: true, trigger: 'change', validator: validatePoliceStation }
+        ],
+        password: [
+          { required: true, trigger: 'change', validator: validatePassword }
         ]
       },
       policeStationNameOptions: [],

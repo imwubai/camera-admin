@@ -9,7 +9,7 @@
         </el-col>
         <el-col :span="5">
           <el-form-item label="所属派出所">
-            <el-input v-model="form.pid" placeholder="请输入" />
+            <el-input v-model="form.policeStationName" placeholder="请输入" />
           </el-form-item>
         </el-col>
         <el-col :span="5">
