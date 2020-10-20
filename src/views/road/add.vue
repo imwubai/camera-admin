@@ -143,12 +143,9 @@ export default {
         this.listLoading = false
         this.tableData = res.data.data
         this.paginationTotal = res.data.totalCount
-      }).catch((a) => {
+      }).catch((e) => {
         this.listLoading = false
-        this.$message({
-          message: '获取数据异常',
-          type: 'error'
-        })
+        this.$message.error(e.response.data.returnMessage || '获取数据异常')
       })
     },
     currentChange(pageNumber) {

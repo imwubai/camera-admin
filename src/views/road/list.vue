@@ -116,12 +116,9 @@ export default {
         this.listLoading = false
         this.tableData = res.data.data
         this.paginationTotal = res.data.totalCount
-      }).catch((a) => {
+      }).catch((e) => {
         this.listLoading = false
-        this.$message({
-          message: '获取数据异常',
-          type: 'error'
-        })
+        this.$message.error(e.response.data.returnMessage || '获取数据异常')
       })
     },
     currentChange(pageNumber) {
@@ -187,8 +184,8 @@ export default {
             // 刷新列表
             this.currentPage = 1
             this.getTableData(1)
-          }).catch(() => {
-            this.$message.error('操作失败')
+          }).catch((e) => {
+            this.$message.error(e.response.data.returnMessage || '操作失败')
           })
         }
       })

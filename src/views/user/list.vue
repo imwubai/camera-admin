@@ -231,8 +231,8 @@ export default {
             // 刷新列表
             this.currentPage = 1
             this.getTableData(1)
-          }).catch(() => {
-            this.$message.error('操作失败')
+          }).catch((e) => {
+            this.$message.error(e.response.data.returnMessage || '操作失败')
           })
         }
       })
