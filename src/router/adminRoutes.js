@@ -60,19 +60,19 @@ const adminRoutes = [
     component: Layout,
     redirect: '/police/list',
     name: 'setup',
-    meta: { title: '派出所管理', icon: 'el-icon-menu' },
+    meta: { title: '中队管理', icon: 'el-icon-menu' },
     children: [
       {
         path: 'list',
         name: 'policelist',
         component: () => import('@/views/police/list'),
-        meta: { title: '派出所列表' }
+        meta: { title: '中队列表' }
       },
       {
         path: 'add',
         name: 'policeadd',
         component: () => import('@/views/police/add'),
-        meta: { title: '新增/修改派出所' }
+        meta: { title: '新增/修改中队' }
       }
     ]
   },

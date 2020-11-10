@@ -10,7 +10,7 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-form-item label="所属派出所" prop="policeStationId">
+          <el-form-item label="所属中队" prop="policeStationId">
             <el-select v-model="form.policeStationId" placeholder="请选择" filterable>
               <el-option
                 v-for="item in policeStationNameOptions"
@@ -121,7 +121,7 @@ export default {
   },
   mounted: function() {
     const { username, userId } = this.$route.query
-    // 获取派出所列表
+    // 获取中队列表
     axios.post('/api/policestations/search', {
       pageNo: 1,
       pageSize: 100
@@ -129,7 +129,7 @@ export default {
       this.policeStationNameOptions = res.data.data
     }).catch(() => {
       this.$message({
-        message: '获取派出所数据异常',
+        message: '获取中队数据异常',
         type: 'error'
       })
     })

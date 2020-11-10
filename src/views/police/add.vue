@@ -3,8 +3,8 @@
     <el-form ref="form" :model="form" label-width="120px">
       <el-row :gutter="20">
         <el-col :span="5">
-          <el-form-item label="派出所名称">
-            <el-input v-model="form.policeStationName" placeholder="请设置派出所名称" />
+          <el-form-item label="中队名称">
+            <el-input v-model="form.policeStationName" placeholder="请设置中队名称" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -75,7 +75,7 @@
       />
     </div>
     <div class="savebtn">
-      <el-button type="primary" :loading="saveLoading" @click="doSubmit">设置派出所完成</el-button>
+      <el-button type="primary" :loading="saveLoading" @click="doSubmit">设置中队完成</el-button>
     </div>
   </div>
 </template>
@@ -204,7 +204,7 @@ export default {
     doSubmit() {
       const { policeStationName, region } = this.form
       if (!policeStationName) {
-        this.$message.error('请先输入派出所名称')
+        this.$message.error('请先输入中队名称')
         return
       }
       if (!region) {

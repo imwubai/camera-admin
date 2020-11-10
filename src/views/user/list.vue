@@ -8,7 +8,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="5">
-          <el-form-item label="所属派出所">
+          <el-form-item label="所属中队">
             <el-input v-model="form.policeStationName" placeholder="请输入" />
           </el-form-item>
         </el-col>
@@ -63,7 +63,7 @@
       />
       <el-table-column
         prop="policeStationName"
-        label="所属派出所"
+        label="所属中队"
       />
       <el-table-column
         prop="telephone"

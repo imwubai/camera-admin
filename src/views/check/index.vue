@@ -102,18 +102,6 @@
         </el-col>
       </el-row>
     </el-form>
-    <el-row class="btns_box">
-      <el-button
-        type="primary"
-        :loading="auditLoading"
-        @click="handleShowDialog(true)"
-      >审核</el-button>
-      <el-button
-        type="primary"
-        :loading="detailLoading"
-        @click="handleShowDialog(false)"
-      >查看</el-button>
-    </el-row>
     <el-table
       v-loading="tableLoading"
       row-key="id"
@@ -121,14 +109,24 @@
       style="width: 100%"
       border
     >
-      <el-table-column label="操作" width="50">
+      <el-table-column label="操作" width="92">
         <template slot-scope="scope">
-          <el-radio
-            class="selectRow-radio"
-            :label="scope.row.id"
-            :value="selectedRowKey"
-            @change="handleSelectRow(scope.row.id)"
-          />
+          <el-button
+            v-if="verifyedStatusMap.get(scope.row.verifyedStatus) === '未审核'"
+            type="primary"
+            :loading="auditLoading"
+            @click="handleShowDialog(true, scope.row.id, scope.row.ruleType)"
+          >审核</el-button>
+          <el-button
+            v-if="
+              ['已审核', '已作废'].includes(
+                verifyedStatusMap.get(scope.row.verifyedStatus)
+              )
+            "
+            type="primary"
+            :loading="detailLoading"
+            @click="handleShowDialog(false, scope.row.id, scope.row.ruleType)"
+          >查看</el-button>
         </template>
       </el-table-column>
       <el-table-column type="index" label="序号" width="50" />
@@ -177,27 +175,24 @@
         <div class="audit-dialog-content-left">
           <div class="evidence-block">
             <div class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceBigPhoto}`" alt>
+              <img :src="`${imgOrigin}/${info.evidenceBigPhoto1}`" alt>
             </div>
-            <div class="evidence-block-imgDiv">
-              <img
-                v-if="info.evidenceSmallPhoto"
-                :src="`${imgOrigin}/${info.evidenceSmallPhoto}`"
-                alt
-              >
-              <div v-else>暂无图片</div>
+            <div v-if="ruleType < 3" class="evidence-block-imgDiv">
+              <img :src="`${imgOrigin}/${info.evidenceBigPhoto2}`" alt>
             </div>
           </div>
           <div class="license-block">
             <div class="license-block-imgDiv">
               <div class="title">当事人</div>
-              <img :src="`${imgOrigin}/${info.facePhoto}`" alt>
+              <img :src="`${imgOrigin}/${info.evidencePhoto}`" alt>
             </div>
             <div class="license-block-imgDiv">
               <div class="title">推荐/车主</div>
               <img
                 :src="`${imgOrigin}/${
-                  isAudit ? selectedHaikang.licensePhoto : info.licensePhoto
+                  isAudit && ruleType >= 3
+                    ? selectedHaikang.facePhoto
+                    : info.facePhoto
                 }`"
                 alt
               >
@@ -205,20 +200,34 @@
             <div class="license-block-tipDiv">
               <div>
                 身份证号：{{
-                  idCard(isAudit ? selectedHaikang.license : info.license)
+                  idCard(
+                    isAudit && ruleType >= 3
+                      ? selectedHaikang.license
+                      : info.license
+                  )
                 }}
               </div>
               <div>
                 相似度：{{
-                  isAudit ? selectedHaikang.similarity : info.similarity
+                  isAudit && ruleType >= 3
+                    ? selectedHaikang.similarity
+                    : info.similarity
                 }}
               </div>
             </div>
           </div>
         </div>
         <div class="audit-dialog-content-right">
+          <div v-if="ruleType < 3" class="evidence-block">
+            <div class="evidence-block-imgDiv">
+              <img :src="`${imgOrigin}/${info.evidenceSmallPhoto}`" alt>
+            </div>
+            <div class="evidence-block-imgDiv">
+              <embed :src="`${imgOrigin}/${info.evidenceVedio}`" alt>
+            </div>
+          </div>
           <div
-            v-show="info.haikang && info.haikang.length > 0"
+            v-show="info.haikang && info.haikang.length > 0 && ruleType >= 3"
             class="similarity-block"
           >
             <div
@@ -294,24 +303,35 @@
               <el-row>
                 <el-col :span="12">
                   <el-form-item label="姓名：">{{
-                    isAudit ? selectedHaikang.ruleName : info.ruleName
+                    isAudit && ruleType >= 3
+                      ? selectedHaikang.ruleName
+                      : info.ruleName
                   }}</el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="车牌号：">
-                    <el-input
-                      v-if="isAudit"
-                      v-model="auditForm.licensePlate"
-                      placeholder="请输入"
-                      maxlength="20"
-                      @input="auditLicensePlateChange"
-                    />
+                    <div v-if="isAudit" class="checkLicensePlate">
+                      <el-input
+                        v-model="auditForm.licensePlate"
+                        placeholder="请输入"
+                        maxlength="20"
+                        @input="auditLicensePlateChange"
+                      />
+                      <el-button
+                        class="checkLicensePlateBtn"
+                        type="primary"
+                        :loading="checkLicensePlateLoading"
+                        @click="handleCheckLicensePlate"
+                      >校验</el-button>
+                    </div>
                     <div v-else>{{ info.licensePlate }}</div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="手机号：">{{
-                    isAudit ? selectedHaikang.telephone : info.telephone
+                    isAudit && ruleType >= 3
+                      ? selectedHaikang.telephone
+                      : info.telephone
                   }}</el-form-item>
                 </el-col>
               </el-row>
@@ -421,10 +441,12 @@ export default {
         travelMode: 1
       },
       selectedRowKey: 0,
+      ruleType: 0,
       isAudit: false,
       dialogVisible: false,
       info: {},
-      selectedHaikangKey: 0
+      selectedHaikangKey: 0,
+      checkLicensePlateLoading: false
     }
   },
   computed: {
@@ -523,15 +545,6 @@ export default {
       })
       return result
     },
-    selectedRowData() {
-      let result = {}
-      this.dataSource.forEach((item) => {
-        if (item === this.selectedRowKey) {
-          result = item
-        }
-      })
-      return result
-    },
     selectedHaikang() {
       let result = {};
       (this.info.haikang || []).forEach((item) => {
@@ -598,13 +611,10 @@ export default {
     // },
     async handleSearch() {
       // 查询
+      this.pageNo = 1
       this.searchLoading = true
       await this.getTableData()
       this.searchLoading = false
-    },
-    handleSelectRow(value) {
-      // 单选
-      this.selectedRowKey = value
     },
     handleCurrentChange(value) {
       // 改变页码
@@ -634,82 +644,87 @@ export default {
       } = this.defaultMessageObj
       return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`
     },
-    handleShowDialog(isAudit) {
-      // 弹窗展示
-      if (!this.selectedRowKey) {
-        this.$message.error('请先选择要操作的数据')
-        return
-      }
-      // if (isAudit) {
-      //   if (
-      //     this.verifyedStatusMap.get(this.selectedRowData.ruletype) !== '未审核'
-      //   ) {
-      //     this.$message.error('请选择未审核的记录')
-      //     return
-      //   }
-      // } else {
-      //   if (
-      //     !['已审核', '已作废'].includes(
-      //       this.verifyedStatusMap.get(this.selectedRowData.ruletype)
-      //     )
-      //   ) {
-      //     this.$message.error('请选择已审核或已作废的记录')
-      //     return
-      //   }
-      // }
+    handleShowDialog(isAudit, id, ruleType) {
       if (isAudit) {
         this.auditLoading = true
       } else {
         this.detailLoading = true
       }
+      this.selectedRowKey = id
+      this.ruleType = ruleType
       this.isAudit = isAudit
       axios
         .get(`/api/rules/${this.selectedRowKey}`)
         .then((res) => {
           const { data } = res
           if (isAudit) {
-            axios
-              .get('/api/faces')
-              .then((res2) => {
-                const { data: data2 } = res2
-                this.info = {
-                  ...data,
-                  haikang: (data2 || []).map((item, index) => ({
-                    ...item,
-                    id: index + 1
-                  }))
-                }
-                this.selectedHaikangKey =
-                  data2 && data2.length > 0 ? data2[0].id : 0
-                this.defaultMessageObj = {
-                  name: this.selectedHaikang.ruleName,
-                  time: this.info.ruleAt,
-                  address: this.info.ruleplace || '',
-                  licensePlate: this.info.licensePlate || '',
-                  ruleType: this.ruleTypeMap.get(data.ruleType || 1), // 违法类型 默认闯红灯
-                  travelMode: this.travelModeMap.get(data.travelMode || 1) // 出行方式 默认电动自行车
-                }
-                this.auditForm = {
-                  ruleType: data.ruleType || 1, // 违法类型 默认闯红灯
-                  travelMode: data.travelMode || 1, // 出行方式 默认电动自行车
-                  licensePlate: data.licensePlate,
-                  message: this.defaultMessage()
-                }
-                this.dialogVisible = true
-                if (isAudit) {
-                  this.auditLoading = false
-                } else {
-                  this.detailLoading = false
-                }
-              })
-              .catch(() => {
-                true
-                if (isAudit) {
-                  this.auditLoading = false
-                } else {
-                  this.detailLoading = false
-                }
-              })
+            if (this.ruleType >= 3) {
+              axios
+                .get(`/api/rules/${this.selectedRowKey}/faces`)
+                .then((res2) => {
+                  const { data: data2 } = res2
+                  this.info = {
+                    ...data,
+                    haikang: (data2 || []).map((item, index) => ({
+                      ...item,
+                      id: index + 1
+                    }))
+                  }
+                  this.selectedHaikangKey =
+                    data2 && data2.length > 0 ? data2[0].id : 0
+                  this.defaultMessageObj = {
+                    name: this.selectedHaikang.ruleName,
+                    time: this.info.ruleAt,
+                    address: this.info.ruleplace || '',
+                    licensePlate: this.info.licensePlate || '',
+                    ruleType: this.ruleTypeMap.get(data.ruleType || 1), // 违法类型 默认闯红灯
+                    travelMode: this.travelModeMap.get(data.travelMode || 1) // 出行方式 默认电动自行车
+                  }
+                  this.auditForm = {
+                    ruleType: data.ruleType || 1, // 违法类型 默认闯红灯
+                    travelMode: data.travelMode || 1, // 出行方式 默认电动自行车
+                    licensePlate: data.licensePlate,
+                    message: this.defaultMessage()
+                  }
+                  this.dialogVisible = true
+                  if (isAudit) {
+                    this.auditLoading = false
+                  } else {
+                    this.detailLoading = false
+                  }
+                })
+                .catch(() => {
+                  if (isAudit) {
+                    this.auditLoading = false
+                  } else {
+                    this.detailLoading = false
+                  }
+                })
+            } else {
+              this.info = {
+                ...data
+              }
+              this.defaultMessageObj = {
+                name: this.info.ruleName,
+                time: this.info.ruleAt,
+                address: this.info.ruleplace || '',
+                licensePlate: this.info.licensePlate || '',
+                ruleType: this.ruleTypeMap.get(data.ruleType || 1), // 违法类型 默认闯红灯
+                travelMode: this.travelModeMap.get(data.travelMode || 1) // 出行方式 默认电动自行车
+              }
+              this.auditForm = {
+                ruleType: data.ruleType || 1, // 违法类型 默认闯红灯
+                travelMode: data.travelMode || 1, // 出行方式 默认电动自行车
+                licensePlate: data.licensePlate,
+                message: this.defaultMessage()
+              }
+              this.dialogVisible = true
+              if (isAudit) {
+                this.auditLoading = false
+              } else {
+                this.detailLoading = false
+              }
+            }
           } else {
             this.info = data
             this.auditForm = {
@@ -765,7 +780,7 @@ export default {
       }
       this.confirmLoading = true
       axios
-        .put('/api/policestations', params)
+        .put('/api/rules', params)
         .then(() => {
           this.dialogVisible = false
           this.getTableData({
@@ -781,6 +796,32 @@ export default {
     handleCancel() {
       // 弹窗-取消
       this.dialogVisible = false
+    },
+    handleCheckLicensePlate() {
+      // 校验车牌号
+      this.checkLicensePlateLoading = true
+      axios
+        .get(`/api/licenseplate/${this.auditForm.licensePlate}`)
+        .then((res) => {
+          const { data } = res
+          if (this.ruleType >= 3) {
+            this.selectedHaikang.facePhoto = data.facePhoto
+            this.selectedHaikang.license = data.license
+            this.selectedHaikang.ruleName = data.ruleName
+            this.selectedHaikang.telephone = data.telephone
+          } else {
+            this.info.facePhoto = data.facePhoto
+            this.info.license = data.license
+            this.info.ruleName = data.ruleName
+            this.info.telephone = data.telephone
+          }
+          this.defaultMessageObj.name = data.ruleName
+          this.auditForm.message = this.defaultMessage()
+          this.checkLicensePlateLoading = false
+        })
+        .catch(() => {
+          this.checkLicensePlateLoading = false
+        })
     }
   }
 }
@@ -793,17 +834,6 @@ export default {
   margin: 20px 0;
   .el-button {
     margin-right: 20px;
-  }
-}
-.btns_box {
-  margin-bottom: 20px;
-}
-.selectRow-radio {
-  .el-radio__input {
-    margin-left: 7px;
-  }
-  .el-radio__label {
-    display: none;
   }
 }
 .table_pagination {
@@ -842,7 +872,7 @@ export default {
           display: flex;
           align-items: center;
           justify-content: center;
-          flex: 0 0 290px;
+          flex: 1;
           height: 198px;
           img {
             display: block;
@@ -877,6 +907,26 @@ export default {
     }
     &-right {
       flex: 0 0 578px;
+      .evidence-block {
+        display: flex;
+        &-imgDiv {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex: 1;
+          height: 196px;
+          img {
+            display: block;
+            width: 100%;
+            height: 100%;
+          }
+          embed {
+            display: block;
+            width: 100%;
+            height: 100%;
+          }
+        }
+      }
       .similarity-block {
         display: flex;
         flex-wrap: wrap;
@@ -945,6 +995,12 @@ export default {
       }
       .el-form-item {
         margin-bottom: 0;
+      }
+      .checkLicensePlate {
+        display: flex;
+        &Btn {
+          margin-left: 5px;
+        }
       }
     }
   }

@@ -3,7 +3,7 @@
     <el-form ref="form" class="roadposition_form" :model="form" label-width="100px">
       <el-row :gutter="20">
         <el-col :span="5">
-          <el-form-item label="派出所名称">
+          <el-form-item label="中队名称">
             <el-input v-model="form.policeStationName" placeholder="请输入" />
           </el-form-item>
         </el-col>
@@ -52,7 +52,7 @@
       </el-table-column>
       <el-table-column
         prop="policeStationName"
-        label="派出所名称"
+        label="中队名称"
       />
       <el-table-column
         prop="region"
