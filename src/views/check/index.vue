@@ -114,7 +114,6 @@
           <el-button
             v-if="verifyedStatusMap.get(scope.row.verifyedStatus) === '未审核'"
             type="primary"
-            :loading="auditLoading"
             @click="handleShowDialog(true, scope.row.id, scope.row.ruleType)"
           >审核</el-button>
           <el-button
@@ -124,7 +123,6 @@
               )
             "
             type="primary"
-            :loading="detailLoading"
             @click="handleShowDialog(false, scope.row.id, scope.row.ruleType)"
           >查看</el-button>
         </template>
@@ -223,7 +221,9 @@
               <img :src="`${imgOrigin}/${info.evidenceSmallPhoto}`" alt>
             </div>
             <div class="evidence-block-imgDiv">
-              <embed :src="`${imgOrigin}/${info.evidenceVedio}`" alt>
+              <video :src="`${imgOrigin}/${info.evidenceVedio}`" controls="controls">
+                您的浏览器不支持。
+              </video>
             </div>
           </div>
           <div
@@ -240,7 +240,7 @@
               }"
               @click="handleSelectFaceImg(item.id)"
             >
-              <img :src="`${imgOrigin}/${item.licensePhoto}`" alt>
+              <img :src="`${imgOrigin}/${item.facePhoto}`" alt>
               <div class="name">
                 {{ item.ruleName }}
                 <span>{{ item.similarity }}</span>
@@ -318,6 +318,7 @@
                         @input="auditLicensePlateChange"
                       />
                       <el-button
+                        v-if="ruleType < 3"
                         class="checkLicensePlateBtn"
                         type="primary"
                         :loading="checkLicensePlateLoading"
@@ -421,8 +422,6 @@ export default {
       ]),
       searchLoading: false,
       tableLoading: false,
-      auditLoading: false,
-      detailLoading: false,
       confirmLoading: false,
       pageNo: 1,
       pageSize: 10,
@@ -645,11 +644,7 @@ export default {
       return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`
     },
     handleShowDialog(isAudit, id, ruleType) {
-      if (isAudit) {
-        this.auditLoading = true
-      } else {
-        this.detailLoading = true
-      }
+      this.tableLoading = true
       this.selectedRowKey = id
       this.ruleType = ruleType
       this.isAudit = isAudit
@@ -687,18 +682,10 @@ export default {
                     message: this.defaultMessage()
                   }
                   this.dialogVisible = true
-                  if (isAudit) {
-                    this.auditLoading = false
-                  } else {
-                    this.detailLoading = false
-                  }
+                  this.tableLoading = false
                 })
                 .catch(() => {
-                  if (isAudit) {
-                    this.auditLoading = false
-                  } else {
-                    this.detailLoading = false
-                  }
+                  this.tableLoading = false
                 })
             } else {
               this.info = {
@@ -719,11 +706,7 @@ export default {
                 message: this.defaultMessage()
               }
               this.dialogVisible = true
-              if (isAudit) {
-                this.auditLoading = false
-              } else {
-                this.detailLoading = false
-              }
+              this.tableLoading = false
             }
           } else {
             this.info = data
@@ -734,19 +717,12 @@ export default {
               message: data.message || ''
             }
             this.dialogVisible = true
-            if (isAudit) {
-              this.auditLoading = false
-            } else {
-              this.detailLoading = false
-            }
+            this.tableLoading = false
           }
+          console.log(this.ruleType)
         })
         .catch(() => {
-          if (isAudit) {
-            this.auditLoading = false
-          } else {
-            this.detailLoading = false
-          }
+          this.tableLoading = false
         })
     },
     handleSelectFaceImg(value) {
@@ -763,12 +739,22 @@ export default {
         this.$message.error('短信模板不能为空')
         return
       }
+      /**
+       * this.info.facePhoto = data.facePhoto
+            this.info.license = data.license
+            this.info.ruleName = data.ruleName
+            this.info.telephone = data.telephone
+       */
       const params = {
         id: this.selectedRowKey,
         verifyedStatus: isAudit ? 2 : 3,
         verifyedName: localStorage.getItem('username'),
         ...this.auditForm,
-        ...this.selectedHaikang,
+        facePhoto: this.ruleType >= 3 ? this.selectedHaikang.facePhoto : this.info.facePhoto,
+        license: this.ruleType >= 3 ? this.selectedHaikang.license : this.info.license,
+        ruleName: this.ruleType >= 3 ? this.selectedHaikang.ruleName : this.info.ruleName,
+        similarity: this.ruleType >= 3 ? this.selectedHaikang.similarity : this.info.similarity,
+        telephone: this.ruleType >= 3 ? this.selectedHaikang.telephone : this.info.telephone,
         handledStatus: this.info.handledStatus,
         licensePlateStatus: this.info.licensePlateStatus,
         verifyedAt: moment().format('YYYY-MM-DD HH:mm:ss')
@@ -778,20 +764,21 @@ export default {
       } else {
         params.verifyedStatus = 3
       }
-      this.confirmLoading = true
-      axios
-        .put('/api/rules', params)
-        .then(() => {
-          this.dialogVisible = false
-          this.getTableData({
-            pageNo: 1
-          })
-          this.getStatisticalData()
-          this.confirmLoading = false
-        })
-        .catch(() => {
-          this.confirmLoading = false
-        })
+      console.log(params)
+      // this.confirmLoading = true
+      // axios
+      //   .put('/api/rules', params)
+      //   .then(() => {
+      //     this.dialogVisible = false
+      //     this.getTableData({
+      //       pageNo: 1
+      //     })
+      //     this.getStatisticalData()
+      //     this.confirmLoading = false
+      //   })
+      //   .catch(() => {
+      //     this.confirmLoading = false
+      //   })
     },
     handleCancel() {
       // 弹窗-取消
@@ -805,10 +792,10 @@ export default {
         .then((res) => {
           const { data } = res
           if (this.ruleType >= 3) {
-            this.selectedHaikang.facePhoto = data.facePhoto
-            this.selectedHaikang.license = data.license
-            this.selectedHaikang.ruleName = data.ruleName
-            this.selectedHaikang.telephone = data.telephone
+            // this.selectedHaikang.facePhoto = data.facePhoto
+            // this.selectedHaikang.license = data.license
+            // this.selectedHaikang.ruleName = data.ruleName
+            // this.selectedHaikang.telephone = data.telephone
           } else {
             this.info.facePhoto = data.facePhoto
             this.info.license = data.license
@@ -920,7 +907,7 @@ export default {
             width: 100%;
             height: 100%;
           }
-          embed {
+          video {
             display: block;
             width: 100%;
             height: 100%;
