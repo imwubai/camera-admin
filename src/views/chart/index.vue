@@ -537,7 +537,7 @@ var data100 = [
 
 const weekOfday = moment().weekday(); // 计算今天是周几
 const now = moment().locale("zh-cn").format("YYYY-MM-DD "); // 获取当天的日期
-const rule_name = ['闯红灯','越线','伞具','未戴头盔','载人','逆行']
+const rule_name = ['闯红灯','越线','伞具','未带头盔','载人','逆行']
 export default {
   data() {
     return {
@@ -592,8 +592,8 @@ export default {
   mounted() {
     axios
       .post("/api/rule/search_screen", {
-        startTime: "2020-11-05 23:59:59", //now + "00:00:00",
-        endTime: "2020-11-07 23:59:59", //now + "23:59:59",
+        startTime:  now + "00:00:00",
+        endTime: now + "23:59:59",
         screenType: parseInt(this.classify),
       })
       .then((res) => {
@@ -604,10 +604,11 @@ export default {
 
         data50 = this.getWd;
 
-        this.chartData11();
-        this.chartData22();
-        this.renderChart1();
-        this.renderChart2();
+        this.chartData11(); // 大图数据
+        this.chartData22(); // 对比图数据
+        this.renderChart1(); // 大图绘制方法
+        this.renderChart2();   // 绘制对比图方法
+
         this.drawSmallMap(); // 小图点击
 
       });
@@ -628,15 +629,17 @@ export default {
 
     this.chart1 = echarts.init(this.$refs.chart1);
     this.chart2 = echarts.init(this.$refs.chart2);
-    this.renderChart1();
-    this.renderChart2();
+    // this.renderChart1();
+    // this.renderChart2();
   },
   methods: {
     drawSmallMap() {
       this.chart1.on("click", (params) => {
+
         for(var i=0;i<rule_name.length;i++){        //二维数组
 
                 this.dataArray[i] = new Array();
+            
         }
 
         data50.forEach(({ id, name, sum, intersectionInfo }) => {
@@ -645,6 +648,7 @@ export default {
 
 
             data100 = intersectionInfo;
+            console.log(data100)
   
             this.chartDataMini11();
           }
@@ -724,7 +728,7 @@ export default {
                 data: this.dataArray[2],
               },
                 {
-                name: '未戴头盔',
+                name: '未带头盔',
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -787,7 +791,7 @@ export default {
         dataY,
         dataMap,
       };
-     
+     console.log(this.chartData1)
     }, // 绘画大图的数据
 
     chartDataMini11() {
@@ -806,19 +810,11 @@ export default {
           ...item,
         }))
         .forEach(({ id, name, sum, detailedInfo }) => {
-    
+    // console.log(detailedInfo)
+   for(let i= 0; i < this.dataArray.length; i++){
+               this.dataArray[i].push('')
+             }
 
-          let isAdd = false;
-
-          if (sum === 0) {
-        
-this.dataArray.forEach(function(e){  
-   e.push('')
-})
-          } else {
-            isAdd = true;
-          }
-        
           detailedInfo
             .map((item) => ({
               ...item,
@@ -827,17 +823,15 @@ this.dataArray.forEach(function(e){
               // console.log(ruleTypeName, sum);
               smallDataX.push(ruleTypeName);
               smallDataY.push(sum);
-              if (isAdd === true) {
+                   
+               for(let i= 0; i < rule_name.length; i++){
 
-                for(let i= 0; i < rule_name.length; i++){
-                    if(rule_name[i] == ruleTypeName) {
+                    if(rule_name[i] === ruleTypeName) {
+                      this.dataArray[i].pop()
                            this.dataArray[i].push(sum);
-                           console.log(this.dataArray)
+                
                     }
                 }
-                
-               
-              }
             });
 
           dataX.push(name);
@@ -854,6 +848,7 @@ this.dataArray.forEach(function(e){
     }, // 绘制小图的数据
 
     chartData22() {
+  
       let dataX = [];
       let dataY1 = [];
       let dataY2 = [];
@@ -873,10 +868,12 @@ this.dataArray.forEach(function(e){
         dataY1,
         dataY2,
       };
+      console.log( this.chartData2)
     }, // 绘制对比图的数据
 
     renderChart1() {
-      // 绘制图表
+      console.log('大图启动')
+      // 绘制大图表
 
       this.chart1.setOption({
         color: ['#38a7f0'],
@@ -1029,7 +1026,7 @@ this.dataArray.forEach(function(e){
         value1: (Math.random() * 10 + 1).toFixed(),
         value2: (Math.random() * 10 + 1).toFixed(),
       }));
-      this.renderChart2();
+      this.renderChart2(); // 绘制对比图方法
       this.setDialogVisible = false;
     },
 
@@ -1057,11 +1054,16 @@ this.dataArray.forEach(function(e){
 
             data50 = this.saveDate;
 
-            this.chartData11();
-            this.chartDataMini11();
-            this.chartData22();
-            this.renderChart1();
-            this.renderChart2();
+            this.chartData11(); // 大图数据
+
+            // this.chartDataMini11(); // 小图数据
+
+            this.chartData22(); // 对比图数据
+
+            this.renderChart1(); // 大图绘制方法
+
+
+            this.renderChart2(); // 绘制对比图方法
 
             this.drawSmallMap(); // 小图的点击事件
           });
