@@ -221,7 +221,10 @@
               <img :src="`${imgOrigin}/${info.evidenceSmallPhoto}`" alt>
             </div>
             <div class="evidence-block-imgDiv">
-              <video :src="`${imgOrigin}/${info.evidenceVedio}`" controls="controls">
+              <video
+                :src="`${imgOrigin}/${info.evidenceVedio}`"
+                controls="controls"
+              >
                 您的浏览器不支持。
               </video>
             </div>
@@ -549,6 +552,8 @@ export default {
       (this.info.haikang || []).forEach((item) => {
         if (item.id === this.selectedHaikangKey) {
           result = item
+          this.defaultMessageObj.name = item.ruleName
+          this.auditForm.message = this.defaultMessage()
         }
       })
       return result
@@ -731,7 +736,7 @@ export default {
     },
     handleAuditOrInvaild(isAudit) {
       // 弹窗-审核/作废
-      if (!this.auditForm.licensePlate) {
+      if (!this.auditForm.licensePlate && this.ruleType < 3) {
         this.$message.error('车牌号不能为空')
         return
       }
@@ -750,11 +755,24 @@ export default {
         verifyedStatus: isAudit ? 2 : 3,
         verifyedName: localStorage.getItem('username'),
         ...this.auditForm,
-        facePhoto: this.ruleType >= 3 ? this.selectedHaikang.facePhoto : this.info.facePhoto,
-        license: this.ruleType >= 3 ? this.selectedHaikang.license : this.info.license,
-        ruleName: this.ruleType >= 3 ? this.selectedHaikang.ruleName : this.info.ruleName,
-        similarity: this.ruleType >= 3 ? this.selectedHaikang.similarity : this.info.similarity,
-        telephone: this.ruleType >= 3 ? this.selectedHaikang.telephone : this.info.telephone,
+        facePhoto:
+          this.ruleType >= 3
+            ? this.selectedHaikang.facePhoto
+            : this.info.facePhoto,
+        license:
+          this.ruleType >= 3 ? this.selectedHaikang.license : this.info.license,
+        ruleName:
+          this.ruleType >= 3
+            ? this.selectedHaikang.ruleName
+            : this.info.ruleName,
+        similarity:
+          this.ruleType >= 3
+            ? this.selectedHaikang.similarity
+            : this.info.similarity,
+        telephone:
+          this.ruleType >= 3
+            ? this.selectedHaikang.telephone
+            : this.info.telephone,
         handledStatus: this.info.handledStatus,
         licensePlateStatus: this.info.licensePlateStatus,
         verifyedAt: moment().format('YYYY-MM-DD HH:mm:ss')
@@ -764,21 +782,20 @@ export default {
       } else {
         params.verifyedStatus = 3
       }
-      console.log(params)
-      // this.confirmLoading = true
-      // axios
-      //   .put('/api/rules', params)
-      //   .then(() => {
-      //     this.dialogVisible = false
-      //     this.getTableData({
-      //       pageNo: 1
-      //     })
-      //     this.getStatisticalData()
-      //     this.confirmLoading = false
-      //   })
-      //   .catch(() => {
-      //     this.confirmLoading = false
-      //   })
+      this.confirmLoading = true
+      axios
+        .put('/api/rules', params)
+        .then(() => {
+          this.dialogVisible = false
+          this.getTableData({
+            pageNo: 1
+          })
+          this.getStatisticalData()
+          this.confirmLoading = false
+        })
+        .catch(() => {
+          this.confirmLoading = false
+        })
     },
     handleCancel() {
       // 弹窗-取消
@@ -912,6 +929,9 @@ export default {
             width: 100%;
             height: 100%;
           }
+        }
+        &-imgDiv:last-child{
+          background-color: #000;
         }
       }
       .similarity-block {
