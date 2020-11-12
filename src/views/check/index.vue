@@ -243,7 +243,7 @@
               }"
               @click="handleSelectFaceImg(item.id)"
             >
-              <img :src="`${imgOrigin}/${item.facePhoto}`" alt>
+              <img :src="`${item.facePhoto}`" alt>
               <div class="name">
                 {{ item.ruleName }}
                 <span>{{ item.similarity }}</span>
