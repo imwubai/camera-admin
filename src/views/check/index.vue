@@ -114,6 +114,7 @@
           <el-button
             v-if="verifyedStatusMap.get(scope.row.verifyedStatus) === '未审核'"
             type="primary"
+            size="small"
             @click="handleShowDialog(true, scope.row.id, scope.row.ruleType)"
           >审核</el-button>
           <el-button
@@ -123,11 +124,14 @@
               )
             "
             type="primary"
+            size="small"
             @click="handleShowDialog(false, scope.row.id, scope.row.ruleType)"
           >查看</el-button>
         </template>
       </el-table-column>
-      <el-table-column type="index" label="序号" width="50" />
+      <el-table-column type="index" label="序号" width="50">
+        <template scope="scope"><span>{{ scope.$index+(pageNo - 1) * pageSize + 1 }} </span></template>
+      </el-table-column>
       <el-table-column prop="ruleAt" label="采集时间" />
       <el-table-column prop="rulePlace" label="违法地点" />
       <el-table-column prop="ruleType" label="违法类型">
@@ -136,6 +140,7 @@
         }}</template>
       </el-table-column>
       <el-table-column prop="similarity" label="相似度" />
+      <el-table-column prop="licensePlate" label="车牌号" />
       <el-table-column prop="verifyedStatus" label="审核状态">
         <template slot-scope="scope">{{
           scope.row.verifyedStatus
@@ -832,6 +837,9 @@ export default {
 </script>
 
 <style lang="scss">
+.el-table td, .el-table th {
+  padding: 5px 0;
+}
 .ruleType-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -880,7 +888,7 @@ export default {
           height: 198px;
           img {
             display: block;
-            width: 100%;
+            max-width: 100%;
             height: 100%;
           }
         }
