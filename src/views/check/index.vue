@@ -105,10 +105,12 @@
     <el-button class="fastCheck" type="primary" :loading="isFastCheck" @click="handleFastCheck">快速审核</el-button>
     <el-table
       v-loading="tableLoading"
+      v-el-table-infinite-scroll="loadNextPage"
       row-key="id"
       :data="dataSource"
       style="width: 100%"
       border
+      height="500px"
     >
       <el-table-column label="操作" width="92">
         <template slot-scope="scope">
@@ -130,9 +132,10 @@
           >查看</el-button>
         </template>
       </el-table-column>
-      <el-table-column type="index" label="序号" width="50">
+      <!-- <el-table-column type="index" label="序号" width="50">
         <template scope="scope"><span>{{ scope.$index+(pageNo - 1) * pageSize + 1 }} </span></template>
-      </el-table-column>
+      </el-table-column> -->
+      <el-table-column type="index" label="序号" width="50" />
       <el-table-column prop="ruleAt" label="采集时间" />
       <el-table-column prop="rulePlace" label="违法地点" />
       <el-table-column prop="ruleType" label="违法类型">
@@ -159,7 +162,7 @@
       <el-table-column prop="verifyedAt" label="审核时间" />
       <el-table-column prop="verifyedName" label="审核人" />
     </el-table>
-    <div class="table_pagination">
+    <!-- <div class="table_pagination">
       <el-pagination
         :current-page="pageNo"
         layout="prev, pager, next"
@@ -167,7 +170,7 @@
         background
         @current-change="handleCurrentChange"
       />
-    </div>
+    </div> -->
     <el-dialog
       class="audit-dialog"
       :title="isAudit ? '审核' : '查看'"
@@ -383,11 +386,15 @@
 </template>
 
 <script>
+import elTableInfiniteScroll from 'el-table-infinite-scroll'
 import moment from 'moment'
 import axios from '@/utils/request'
 import { apiDomain } from '@/utils/config'
 
 export default {
+  directives: {
+    'el-table-infinite-scroll': elTableInfiniteScroll
+  },
   data() {
     return {
       defaultMessageObj: {
@@ -434,8 +441,9 @@ export default {
       searchLoading: false,
       tableLoading: false,
       confirmLoading: false,
+      hasNextPageData: true, // 下一页是否还有数据
       pageNo: 1,
-      pageSize: 10,
+      pageSize: 20,
       total: 4,
       dataSource: [],
       count1: 0,
@@ -578,28 +586,34 @@ export default {
     }
   },
   mounted() {
-    this.getTableData()
+    // this.getTableData()
     this.getStatisticalData()
   },
   methods: {
     idCard(text) {
       return text ? `******${String(text).substr(6, 8)}****` : ''
     },
-    getTableData(params) {
+    getTableData() {
       this.tableLoading = true
       axios
         .post('/api/rules/search', {
           pageNo: this.pageNo,
           pageSize: this.pageSize,
-          ...this.searchParams,
-          ...params
+          ...this.searchParams
         })
         .then((res) => {
           const { data, pageNo, pageSize, totalCount } = res.data
           this.pageNo = pageNo
           this.pageSize = pageSize
           this.total = totalCount
-          this.dataSource = data
+          // this.dataSource = data
+          // 判断是否还有下一页数据
+          if (data.length < pageSize) {
+            this.hasNextPageData = false
+          }
+          // 页码自增
+          this.pageNo = (this.pageNo + 1)
+          this.dataSource = this.dataSource.concat(data)
           this.tableLoading = false
         })
         .catch(() => {
@@ -627,6 +641,11 @@ export default {
       this.searchLoading = true
       await this.getTableData()
       this.searchLoading = false
+    },
+    loadNextPage() {
+      if (this.hasNextPageData) {
+        this.getTableData()
+      }
     },
     closeCheckDialog() {
       this.isFastCheck = false
@@ -810,9 +829,11 @@ export default {
       axios
         .put('/api/rules', params)
         .then(() => {
-          this.getTableData({
-            pageNo: 1
-          })
+          // 重置初始条件
+          this.hasNextPageData = true
+          this.pageNo = 1
+          this.getTableData()
+          // 重新获取最上面的数字
           this.getStatisticalData()
           this.confirmLoading = false
           // 如果是快速审核装状态
