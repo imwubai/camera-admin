@@ -639,6 +639,8 @@ export default {
         this.handleShowDialog(true, id, ruleType)
       }).catch((err) => {
         this.isFastCheck = false
+        // 最后一条审核完后关闭弹框
+        this.dialogVisible = false
         const { returnMessage } = err.response.data
         this.$message.error(returnMessage || '没有需要审核的数据了')
       })
