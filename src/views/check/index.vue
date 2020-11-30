@@ -102,6 +102,7 @@
         </el-col>
       </el-row>
     </el-form>
+    <el-button class="fastCheck" type="primary" :loading="isFastCheck" @click="handleFastCheck">快速审核</el-button>
     <el-table
       v-loading="tableLoading"
       row-key="id"
@@ -173,6 +174,7 @@
       :visible.sync="dialogVisible"
       width="1200px"
       :destroy-on-close="true"
+      @close="closeCheckDialog"
     >
       <div class="audit-dialog-content">
         <div class="audit-dialog-content-left">
@@ -428,6 +430,7 @@ export default {
         [6, '助力自行车'],
         [7, '其他非机动车']
       ]),
+      isFastCheck: false, // 是否快速审核中
       searchLoading: false,
       tableLoading: false,
       confirmLoading: false,
@@ -625,6 +628,21 @@ export default {
       await this.getTableData()
       this.searchLoading = false
     },
+    closeCheckDialog() {
+      this.isFastCheck = false
+    },
+    handleFastCheck() {
+      // 快速审核
+      this.isFastCheck = true
+      axios.get('/api/rule/unverified').then((res) => {
+        const { id, ruleType } = res.data
+        this.handleShowDialog(true, id, ruleType)
+      }).catch((err) => {
+        this.isFastCheck = false
+        const { returnMessage } = err.response.data
+        this.$message.error(returnMessage || '没有需要审核的数据了')
+      })
+    },
     handleCurrentChange(value) {
       // 改变页码
       this.pageNo = value
@@ -729,7 +747,6 @@ export default {
             this.dialogVisible = true
             this.tableLoading = false
           }
-          console.log(this.ruleType)
         })
         .catch(() => {
           this.tableLoading = false
@@ -791,12 +808,17 @@ export default {
       axios
         .put('/api/rules', params)
         .then(() => {
-          this.dialogVisible = false
           this.getTableData({
             pageNo: 1
           })
           this.getStatisticalData()
           this.confirmLoading = false
+          // 如果是快速审核装状态
+          if (this.isFastCheck) {
+            this.handleFastCheck()
+          } else {
+            this.dialogVisible = false
+          }
         })
         .catch(() => {
           this.confirmLoading = false
@@ -869,6 +891,9 @@ export default {
       color: red;
     }
   }
+}
+.fastCheck {
+  margin-bottom: 20px;
 }
 .audit-dialog {
   .el-dialog__body {
