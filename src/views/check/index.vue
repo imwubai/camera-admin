@@ -110,7 +110,7 @@
       :data="dataSource"
       style="width: 100%"
       border
-      height="500px"
+      height="600px"
     >
       <el-table-column label="操作" width="92">
         <template slot-scope="scope">
