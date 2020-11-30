@@ -177,6 +177,7 @@
       :visible.sync="dialogVisible"
       width="1200px"
       :destroy-on-close="true"
+      :lock-scroll="false"
       @close="closeCheckDialog"
     >
       <div class="audit-dialog-content">
