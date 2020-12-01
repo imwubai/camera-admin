@@ -60,7 +60,7 @@
             last: index === contrastRatiosData.length - 1,
           }"
         >
-          {{ item }}
+          {{ item }}%
         </div>
       </div>
     </div>
