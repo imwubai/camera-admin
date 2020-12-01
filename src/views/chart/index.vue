@@ -14,10 +14,10 @@
         逆行 <span>{{ retrogradeNum }}</span>
       </div>
       <div class="tipBlock">
-        一车多人 <span>{{ moreNum }}</span>
+        载人 <span>{{ moreNum }}</span>
       </div>
       <div class="tipBlock">
-        无头盔 <span>{{ noHelmetNum }}</span>
+        未带头盔 <span>{{ noHelmetNum }}</span>
       </div>
       <div class="tipBlock">
         安装伞具 <span>{{ umbrellasNum }}</span>
@@ -50,17 +50,17 @@
       <div class="contrast">
         <div class="title">对比率</div>
         <div
-          v-for="(item, index) in contrastRatios"
+          v-for="(item, index) in contrastRatiosData"
           :key="index"
           :class="{
             number: true,
             positive_number: item > 0,
             negative_number: item < 0,
             zero_number: item === 0,
-            last: index === contrastRatios.length - 1,
+            last: index === contrastRatiosData.length - 1,
           }"
         >
-          {{ item }}%
+          {{ item }}
         </div>
       </div>
     </div>
@@ -87,6 +87,7 @@
           range-separator="至"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
+           value-format="yyyy-MM-dd HH:mm:ss"
         />
       </div>
       <div class="form-div">
@@ -97,6 +98,7 @@
           range-separator="至"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
+           value-format="yyyy-MM-dd HH:mm:ss"
         />
       </div>
       <div class="form-div">
@@ -111,7 +113,7 @@
             v-for="item in roadOptions"
             :key="item.value"
             :label="item.label"
-            :value="item.value"
+            :value="item.label"
           />
         </el-select>
       </div>
@@ -501,13 +503,13 @@ const data20 = [
   },
   {
     id: 4,
-    name: "一车多人",
+    name: "载人",
     value1: 12,
     value2: 7,
   },
   {
     id: 5,
-    name: "无头盔",
+    name: "未带头盔",
     value1: 12,
     value2: 6,
   },
@@ -535,9 +537,18 @@ var data100 = [
   },
 ]; // 小图的原始数据
 
+var data200 = [
+  {
+    ruleName: "逆行",
+    upSum: 1,
+    loSum: 1,
+    contrastRatio: "0.00%",
+  },
+]; // 对比图原始数据
+
 const weekOfday = moment().weekday(); // 计算今天是周几
 const now = moment().locale("zh-cn").format("YYYY-MM-DD "); // 获取当天的日期
-const rule_name = ['闯红灯','越线','伞具','未带头盔','载人','逆行']
+const rule_name = ["闯红灯", "越线", "伞具", "未带头盔", "载人", "逆行"];
 export default {
   data() {
     return {
@@ -548,7 +559,7 @@ export default {
       moreNum: 113,
       noHelmetNum: 113,
       umbrellasNum: 113,
-      toDoNum: 11,
+      toDoNum: "",
       chart1: null,
       chart2: null,
       ssCondition1: 0, // 今日0 或 本周1
@@ -560,13 +571,13 @@ export default {
       setDialogVisible: false,
       setFirstDialogVisible: false,
       radio: "1",
-      contrastRatios: [-10, 10, 0, 11, -17, 10], // 对比率
+      contrastRatiosData: [-10, 10, 0, 11, -17, 10], // 对比率
       roadOptions: [], // 路口下拉框数据
       date1: [
         `${moment()
           .subtract(weekOfday + 6, "days")
           .format("YYYY-MM-DD")} 00:00:00`,
-        `${moment().subtract(weekOfday, "days").format("YYYY-MM-DD")} 23:59:59`,
+          `${moment().subtract(weekOfday, "days").format("YYYY-MM-DD")} 23:59:59`,
       ], // 上周一至上周日
       date2: [
         `${moment()
@@ -585,14 +596,13 @@ export default {
       chartDataMini1: null, //小图的数据
       chartData2: null,
       dataArray: [], //详细数据
-      
     };
   },
 
   mounted() {
     axios
       .post("/api/rule/search_screen", {
-        startTime:  now + "00:00:00",
+        startTime: now + "00:00:00",
         endTime: now + "23:59:59",
         screenType: parseInt(this.classify),
       })
@@ -605,12 +615,63 @@ export default {
         data50 = this.getWd;
 
         this.chartData11(); // 大图数据
-        this.chartData22(); // 对比图数据
+        // this.chartData22(); // 对比图数据
         this.renderChart1(); // 大图绘制方法
-        this.renderChart2();   // 绘制对比图方法
+        // this.renderChart2(); // 绘制对比图方法
 
         this.drawSmallMap(); // 小图点击
+      });
 
+
+
+
+    axios
+      .post("/api/rule/search-illegal-trend", {
+        upStartTime: this.date1[0],
+        upEndTime: this.date1[1],
+        loStartTime: this.date2[0],
+        loEndTime: this.date2[1],
+        // intersection: this.roadValue,
+      })
+      .then((res) => {
+  
+        this.contrastData = res.data;
+        data200 = this.contrastData;
+    
+    
+
+data200.info.forEach(({ruleName,contrastRatio})=>{
+
+  switch (ruleName) {
+          case "逆行":
+            this.contrastRatiosData[0] = contrastRatio;
+            break;
+          case "闯红灯":
+            this.contrastRatiosData[1] = contrastRatio;
+            break;
+          case "越线":
+           this.contrastRatiosData[2]= contrastRatio;
+            break;
+          case "载人":
+          this.contrastRatiosData[3] = contrastRatio;
+            break;
+          case "伞具":
+           this.contrastRatiosData[4] = contrastRatio;
+            break;
+          case "未带头盔":
+           this.contrastRatiosData[5] = contrastRatio;
+            break;
+
+        }
+})
+
+
+        // this.chartData11(); // 大图数据
+        this.chartData22(); // 对比图数据
+        // this.renderChart1(); // 大图绘制方法
+        this.renderChart2(); // 绘制对比图方法
+
+        // this.drawSmallMap(); // 小图点击
       });
 
     axios
@@ -619,37 +680,75 @@ export default {
         pageSize: 1000,
       })
       .then((res) => {
+        // console.log(res.data)
         const { data = {} } = res;
         const { data: resData } = data;
         this.roadOptions = resData.map((item) => ({
           label: item.crossingName,
           value: item.crossingId,
         }));
-      });
+  
+        this.roadOptions.push({label:'全部',value:'-1'})
+       
+      }); // 路口数据
 
     this.chart1 = echarts.init(this.$refs.chart1);
     this.chart2 = echarts.init(this.$refs.chart2);
     // this.renderChart1();
     // this.renderChart2();
+
+    // 渲染真实数据
+    axios.get("/api/rule/search-illegal-list").then((res) => {
+      const truthful = res.data;
+
+      truthful.info.forEach(({ ruleName, sum }) => {
+ 
+        switch (ruleName) {
+          case "闯红灯":
+            this.redNum = sum;
+            break;
+          case "越线":
+            this.crossLineNum = sum;
+            break;
+          case "载人":
+            this.moreNum = sum;
+            break;
+          case "伞具":
+            this.umbrellasNum = sum;
+            break;
+          case "未带头盔":
+            this.noHelmetNum = sum;
+            break;
+          case "逆行":
+            this.retrogradeNum = sum;
+            break;
+          case "今日违法总数":
+            this.totalNum = sum;
+            break;
+        }
+      });
+    });
+
+    // 未处理数据
+    axios.get("/api/rule/search-illegal-sum").then((res) => {
+
+      this.toDoNum = res.data.sum;
+    });
   },
   methods: {
     drawSmallMap() {
       this.chart1.on("click", (params) => {
+        for (var i = 0; i < rule_name.length; i++) {
+          //二维数组
 
-        for(var i=0;i<rule_name.length;i++){        //二维数组
-
-                this.dataArray[i] = new Array();
-            
+          this.dataArray[i] = new Array();
         }
 
         data50.forEach(({ id, name, sum, intersectionInfo }) => {
-
           if (name === params.name) {
-
-
             data100 = intersectionInfo;
-            console.log(data100)
-  
+        
+
             this.chartDataMini11();
           }
         });
@@ -698,7 +797,7 @@ export default {
             ],
             series: [
               {
-                name: '闯红灯',
+                name: "闯红灯",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -708,7 +807,7 @@ export default {
                 data: this.dataArray[0],
               },
               {
-                name: '越线',
+                name: "越线",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -717,8 +816,8 @@ export default {
                 },
                 data: this.dataArray[1],
               },
-                {
-                name: '伞具',
+              {
+                name: "伞具",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -727,8 +826,8 @@ export default {
                 },
                 data: this.dataArray[2],
               },
-                {
-                name: '未带头盔',
+              {
+                name: "未带头盔",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -737,8 +836,8 @@ export default {
                 },
                 data: this.dataArray[3],
               },
-                {
-                name: '载人',
+              {
+                name: "载人",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -747,8 +846,8 @@ export default {
                 },
                 data: this.dataArray[4],
               },
-                {
-                name: '逆行',
+              {
+                name: "逆行",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -791,12 +890,10 @@ export default {
         dataY,
         dataMap,
       };
-     console.log(this.chartData1)
+
     }, // 绘画大图的数据
 
     chartDataMini11() {
-
-
       let dataX = [];
       let dataY = [];
 
@@ -810,28 +907,26 @@ export default {
           ...item,
         }))
         .forEach(({ id, name, sum, detailedInfo }) => {
-    // console.log(detailedInfo)
-   for(let i= 0; i < this.dataArray.length; i++){
-               this.dataArray[i].push('')
-             }
+ 
+          for (let i = 0; i < this.dataArray.length; i++) {
+            this.dataArray[i].push("");
+          }
 
           detailedInfo
             .map((item) => ({
               ...item,
             }))
             .forEach(({ ruleTypeName, sum }) => {
-              // console.log(ruleTypeName, sum);
+     
               smallDataX.push(ruleTypeName);
               smallDataY.push(sum);
-                   
-               for(let i= 0; i < rule_name.length; i++){
 
-                    if(rule_name[i] === ruleTypeName) {
-                      this.dataArray[i].pop()
-                           this.dataArray[i].push(sum);
-                
-                    }
+              for (let i = 0; i < rule_name.length; i++) {
+                if (rule_name[i] === ruleTypeName) {
+                  this.dataArray[i].pop();
+                  this.dataArray[i].push(sum);
                 }
+              }
             });
 
           dataX.push(name);
@@ -844,39 +939,59 @@ export default {
         smallDataX,
         smallDataY,
       };
-      console.log(this.chartDataMini1);
+
     }, // 绘制小图的数据
 
     chartData22() {
-  
+
+
       let dataX = [];
       let dataY1 = [];
       let dataY2 = [];
-      this.data2
+      // data20
+      //   .map((item) => ({
+      //     ...item,
+      //     value1: (Math.random() * 10 + 1).toFixed(),
+      //     value2: (Math.random() * 10 + 1).toFixed(),
+      //   }))
+      //   .forEach(({ id, name, value1, value2 }) => {
+      //     dataX.push(name);
+      //     dataY1.push(value1);
+      //     dataY2.push(value2);
+      //   });
+      // this.chartData2 = {
+      //   dataX,
+      //   dataY1,
+      //   dataY2,
+      // };
+       data200.info
         .map((item) => ({
           ...item,
-          value1: (Math.random() * 10 + 1).toFixed(),
-          value2: (Math.random() * 10 + 1).toFixed(),
         }))
-        .forEach(({ id, name, value1, value2 }) => {
-          dataX.push(name);
-          dataY1.push(value1);
-          dataY2.push(value2);
-        });
+       .forEach(({ ruleName, upSum, loSum, contrastRatio }) => {
+        dataX.push(ruleName);
+        dataY1.push(upSum);
+        dataY2.push(loSum);
+      });
       this.chartData2 = {
         dataX,
         dataY1,
         dataY2,
       };
-      console.log( this.chartData2)
+ 
+      
+
+      //    ruleName: "逆行",
+      // upSum: 1,
+      // loSum: 1,
+      // contrastRatio: "0.00%",
     }, // 绘制对比图的数据
 
     renderChart1() {
-      console.log('大图启动')
       // 绘制大图表
 
       this.chart1.setOption({
-        color: ['#38a7f0'],
+        color: ["#38a7f0"],
         grid: {
           left: "38px",
           right: "38px",
@@ -1007,12 +1122,14 @@ export default {
     handleSetFiest() {
       this.setFirstDialogVisible = true;
     },
+
+    // 对比图数据按钮的方法
     handleSaveSet() {
-      if (this.data1 && this.data1.length === 0) {
+      if (this.date1 === null) {
         this.$message.error("请选择上期时间");
         return;
       }
-      if (this.data2 && this.data2.length === 0) {
+      if (this.date2  === null) {
         this.$message.error("请选择本期时间");
         return;
       }
@@ -1020,14 +1137,51 @@ export default {
         this.$message.error("请选择路口");
         return;
       }
-      // console.log(this.date1, this.date2, this.roadValue);
-      this.data2 = data20.map((item) => ({
-        ...item,
-        value1: (Math.random() * 10 + 1).toFixed(),
-        value2: (Math.random() * 10 + 1).toFixed(),
-      }));
-      this.renderChart2(); // 绘制对比图方法
+
+
       this.setDialogVisible = false;
+
+     if(this.roadValue === '全部'){
+       this.roadValue = ''
+     }
+      axios
+        .post("/api/rule/search-illegal-trend", {
+          upStartTime: this.date1[0],
+          upEndTime: this.date1[1],
+          loStartTime: this.date2[0],
+          loEndTime: this.date2[1],
+          intersection: this.roadValue,
+        })
+        .then((res) => {
+          const comparison = res.data;
+
+          data200 = comparison;
+     
+          // this.getStartTime = res.data.startTime;
+          // this.getEndTime = res.data.endTime;
+          // this.saveDate = res.data.screenInfo;
+
+          // data50 = this.saveDate;
+
+          // this.chartData11(); // 大图数据
+
+          // // this.chartDataMini11(); // 小图数据
+
+          this.chartData22(); // 对比图数据
+
+          // this.renderChart1(); // 大图绘制方法
+
+          this.renderChart2(); // 绘制对比图方法
+
+          // this.drawSmallMap(); // 小图的点击事件
+        });
+
+      // this.data2 = data20.map((item) => ({
+      //   ...item,
+      //   value1: (Math.random() * 10 + 1).toFixed(),
+      //   value2: (Math.random() * 10 + 1).toFixed(),
+      // }));
+      // this.renderChart2(); // 绘制对比图方法
     },
 
     // 设置按钮的方法
@@ -1047,7 +1201,7 @@ export default {
             screenType: parseInt(this.classify),
           })
           .then((res) => {
-            // console.log(res.data.screenInfo)
+     
             this.getStartTime = res.data.startTime;
             this.getEndTime = res.data.endTime;
             this.saveDate = res.data.screenInfo;
@@ -1061,7 +1215,6 @@ export default {
             this.chartData22(); // 对比图数据
 
             this.renderChart1(); // 大图绘制方法
-
 
             this.renderChart2(); // 绘制对比图方法
 
