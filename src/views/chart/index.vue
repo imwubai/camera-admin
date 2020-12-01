@@ -666,12 +666,9 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
 })
 
 
-        // this.chartData11(); // 大图数据
         this.chartData22(); // 对比图数据
-        // this.renderChart1(); // 大图绘制方法
         this.renderChart2(); // 绘制对比图方法
 
-        // this.drawSmallMap(); // 小图点击
       });
 
     axios
@@ -688,14 +685,12 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
           value: item.crossingId,
         }));
   
-        this.roadOptions.push({label:'全部',value:'-1'})
+        this.roadOptions.unshift({label:'全部',value:'-1'})
        
       }); // 路口数据
 
     this.chart1 = echarts.init(this.$refs.chart1);
     this.chart2 = echarts.init(this.$refs.chart2);
-    // this.renderChart1();
-    // this.renderChart2();
 
     // 渲染真实数据
     axios.get("/api/rule/search-illegal-list").then((res) => {
