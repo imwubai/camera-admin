@@ -87,7 +87,7 @@
           range-separator="至"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
-           value-format="yyyy-MM-dd HH:mm:ss"
+          value-format="yyyy-MM-dd HH:mm:ss"
         />
       </div>
       <div class="form-div">
@@ -98,7 +98,7 @@
           range-separator="至"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
-           value-format="yyyy-MM-dd HH:mm:ss"
+          value-format="yyyy-MM-dd HH:mm:ss"
         />
       </div>
       <div class="form-div">
@@ -571,13 +571,13 @@ export default {
       setDialogVisible: false,
       setFirstDialogVisible: false,
       radio: "1",
-      contrastRatiosData: [-10, 10, 0, 11, -17, 10], // 对比率
+      contrastRatiosData: [], // 对比率
       roadOptions: [], // 路口下拉框数据
       date1: [
         `${moment()
           .subtract(weekOfday + 6, "days")
           .format("YYYY-MM-DD")} 00:00:00`,
-          `${moment().subtract(weekOfday, "days").format("YYYY-MM-DD")} 23:59:59`,
+        `${moment().subtract(weekOfday, "days").format("YYYY-MM-DD")} 23:59:59`,
       ], // 上周一至上周日
       date2: [
         `${moment()
@@ -615,15 +615,11 @@ export default {
         data50 = this.getWd;
 
         this.chartData11(); // 大图数据
-        // this.chartData22(); // 对比图数据
+
         this.renderChart1(); // 大图绘制方法
-        // this.renderChart2(); // 绘制对比图方法
 
         this.drawSmallMap(); // 小图点击
-      });
-
-
-
+      }); // 大图接口
 
     axios
       .post("/api/rule/search-illegal-trend", {
@@ -634,42 +630,35 @@ export default {
         // intersection: this.roadValue,
       })
       .then((res) => {
-  
         this.contrastData = res.data;
         data200 = this.contrastData;
-    
-    
 
-data200.info.forEach(({ruleName,contrastRatio})=>{
-
-  switch (ruleName) {
-          case "逆行":
-            this.contrastRatiosData[0] = contrastRatio;
-            break;
-          case "闯红灯":
-            this.contrastRatiosData[1] = contrastRatio;
-            break;
-          case "越线":
-           this.contrastRatiosData[2]= contrastRatio;
-            break;
-          case "载人":
-          this.contrastRatiosData[3] = contrastRatio;
-            break;
-          case "伞具":
-           this.contrastRatiosData[4] = contrastRatio;
-            break;
-          case "未带头盔":
-           this.contrastRatiosData[5] = contrastRatio;
-            break;
-
-        }
-})
-
+        data200.info.forEach(({ ruleName, contrastRatio }) => {
+          switch (ruleName) {
+            case "逆行":
+              this.contrastRatiosData[0] = contrastRatio;
+              break;
+            case "闯红灯":
+              this.contrastRatiosData[1] = contrastRatio;
+              break;
+            case "越线":
+              this.contrastRatiosData[2] = contrastRatio;
+              break;
+            case "载人":
+              this.contrastRatiosData[3] = contrastRatio;
+              break;
+            case "伞具":
+              this.contrastRatiosData[4] = contrastRatio;
+              break;
+            case "未带头盔":
+              this.contrastRatiosData[5] = contrastRatio;
+              break;
+          }
+        });
 
         this.chartData22(); // 对比图数据
         this.renderChart2(); // 绘制对比图方法
-
-      });
+      }); // 对比图接口
 
     axios
       .post("/api/crossings/search", {
@@ -684,10 +673,9 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
           label: item.crossingName,
           value: item.crossingId,
         }));
-  
-        this.roadOptions.unshift({label:'全部',value:'-1'})
-       
-      }); // 路口数据
+
+        this.roadOptions.unshift({ label: "全部", value: "-1" });
+      }); // 路口数据接口
 
     this.chart1 = echarts.init(this.$refs.chart1);
     this.chart2 = echarts.init(this.$refs.chart2);
@@ -697,7 +685,6 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
       const truthful = res.data;
 
       truthful.info.forEach(({ ruleName, sum }) => {
- 
         switch (ruleName) {
           case "闯红灯":
             this.redNum = sum;
@@ -726,7 +713,6 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
 
     // 未处理数据
     axios.get("/api/rule/search-illegal-sum").then((res) => {
-
       this.toDoNum = res.data.sum;
     });
   },
@@ -742,7 +728,6 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
         data50.forEach(({ id, name, sum, intersectionInfo }) => {
           if (name === params.name) {
             data100 = intersectionInfo;
-        
 
             this.chartDataMini11();
           }
@@ -885,7 +870,6 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
         dataY,
         dataMap,
       };
-
     }, // 绘画大图的数据
 
     chartDataMini11() {
@@ -902,7 +886,6 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
           ...item,
         }))
         .forEach(({ id, name, sum, detailedInfo }) => {
- 
           for (let i = 0; i < this.dataArray.length; i++) {
             this.dataArray[i].push("");
           }
@@ -912,7 +895,6 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
               ...item,
             }))
             .forEach(({ ruleTypeName, sum }) => {
-     
               smallDataX.push(ruleTypeName);
               smallDataY.push(sum);
 
@@ -934,52 +916,27 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
         smallDataX,
         smallDataY,
       };
-
     }, // 绘制小图的数据
 
     chartData22() {
-
-
       let dataX = [];
       let dataY1 = [];
       let dataY2 = [];
-      // data20
-      //   .map((item) => ({
-      //     ...item,
-      //     value1: (Math.random() * 10 + 1).toFixed(),
-      //     value2: (Math.random() * 10 + 1).toFixed(),
-      //   }))
-      //   .forEach(({ id, name, value1, value2 }) => {
-      //     dataX.push(name);
-      //     dataY1.push(value1);
-      //     dataY2.push(value2);
-      //   });
-      // this.chartData2 = {
-      //   dataX,
-      //   dataY1,
-      //   dataY2,
-      // };
-       data200.info
+
+      data200.info
         .map((item) => ({
           ...item,
         }))
-       .forEach(({ ruleName, upSum, loSum, contrastRatio }) => {
-        dataX.push(ruleName);
-        dataY1.push(upSum);
-        dataY2.push(loSum);
-      });
+        .forEach(({ ruleName, upSum, loSum, contrastRatio }) => {
+          dataX.push(ruleName);
+          dataY1.push(upSum);
+          dataY2.push(loSum);
+        });
       this.chartData2 = {
         dataX,
         dataY1,
         dataY2,
       };
- 
-      
-
-      //    ruleName: "逆行",
-      // upSum: 1,
-      // loSum: 1,
-      // contrastRatio: "0.00%",
     }, // 绘制对比图的数据
 
     renderChart1() {
@@ -1038,7 +995,7 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
           },
         ],
       });
-    },
+    }, // 绘制大图表
 
     renderChart2() {
       // 绘制对比图表
@@ -1109,7 +1066,7 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
           },
         ],
       });
-    },
+    }, // 绘制对比图表
 
     handleSet() {
       this.setDialogVisible = true;
@@ -1124,21 +1081,20 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
         this.$message.error("请选择上期时间");
         return;
       }
-      if (this.date2  === null) {
+      if (this.date2 === null) {
         this.$message.error("请选择本期时间");
         return;
       }
-      if (!(this.roadValue || this.roadValue === 0)) {
-        this.$message.error("请选择路口");
-        return;
-      }
-
+      // if (!(this.roadValue || this.roadValue === 0)) {
+      //   this.$message.error("请选择路口");
+      //   return;
+      // }
 
       this.setDialogVisible = false;
 
-     if(this.roadValue === '全部'){
-       this.roadValue = ''
-     }
+      if (this.roadValue === "全部") {
+        this.roadValue = "";
+      }
       axios
         .post("/api/rule/search-illegal-trend", {
           upStartTime: this.date1[0],
@@ -1148,35 +1104,35 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
           intersection: this.roadValue,
         })
         .then((res) => {
-          const comparison = res.data;
-
-          data200 = comparison;
-     
-          // this.getStartTime = res.data.startTime;
-          // this.getEndTime = res.data.endTime;
-          // this.saveDate = res.data.screenInfo;
-
-          // data50 = this.saveDate;
-
-          // this.chartData11(); // 大图数据
-
-          // // this.chartDataMini11(); // 小图数据
+          this.contrastData = res.data;
+          data200 = this.contrastData;
+          this.contrastRatiosData = [];
+          data200.info.forEach(({ ruleName, contrastRatio }) => {
+            switch (ruleName) {
+              case "逆行":
+                this.contrastRatiosData[0] = contrastRatio;
+                break;
+              case "闯红灯":
+                this.contrastRatiosData[1] = contrastRatio;
+                break;
+              case "越线":
+                this.contrastRatiosData[2] = contrastRatio;
+                break;
+              case "载人":
+                this.contrastRatiosData[3] = contrastRatio;
+                break;
+              case "伞具":
+                this.contrastRatiosData[4] = contrastRatio;
+                break;
+              case "未带头盔":
+                this.contrastRatiosData[5] = contrastRatio;
+                break;
+            }
+          });
 
           this.chartData22(); // 对比图数据
-
-          // this.renderChart1(); // 大图绘制方法
-
           this.renderChart2(); // 绘制对比图方法
-
-          // this.drawSmallMap(); // 小图的点击事件
         });
-
-      // this.data2 = data20.map((item) => ({
-      //   ...item,
-      //   value1: (Math.random() * 10 + 1).toFixed(),
-      //   value2: (Math.random() * 10 + 1).toFixed(),
-      // }));
-      // this.renderChart2(); // 绘制对比图方法
     },
 
     // 设置按钮的方法
@@ -1196,22 +1152,14 @@ data200.info.forEach(({ruleName,contrastRatio})=>{
             screenType: parseInt(this.classify),
           })
           .then((res) => {
-     
             this.getStartTime = res.data.startTime;
             this.getEndTime = res.data.endTime;
             this.saveDate = res.data.screenInfo;
 
             data50 = this.saveDate;
-
             this.chartData11(); // 大图数据
 
-            // this.chartDataMini11(); // 小图数据
-
-            this.chartData22(); // 对比图数据
-
             this.renderChart1(); // 大图绘制方法
-
-            this.renderChart2(); // 绘制对比图方法
 
             this.drawSmallMap(); // 小图的点击事件
           });
