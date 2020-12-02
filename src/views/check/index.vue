@@ -612,9 +612,14 @@ export default {
           if (data.length < pageSize) {
             this.hasNextPageData = false
           }
+          // 第一页时候重置当前表格数据
+          if (this.pageNo === 1) {
+            this.dataSource = data
+          } else {
+            this.dataSource = this.dataSource.concat(data)
+          }
           // 页码自增
           this.pageNo = (this.pageNo + 1)
-          this.dataSource = this.dataSource.concat(data)
           this.tableLoading = false
         })
         .catch(() => {
@@ -638,6 +643,7 @@ export default {
     // },
     async handleSearch() {
       // 查询
+      this.hasNextPageData = true
       this.pageNo = 1
       this.searchLoading = true
       await this.getTableData()
