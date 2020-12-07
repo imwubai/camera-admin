@@ -98,11 +98,18 @@
             type="primary"
             :loading="searchLoading"
             @click="handleSearch"
-          >查询</el-button>
+            >查询</el-button
+          >
         </el-col>
       </el-row>
     </el-form>
-    <el-button class="fastCheck" type="primary" :loading="isFastCheck" @click="handleFastCheck">快速审核</el-button>
+    <el-button
+      class="fastCheck"
+      type="primary"
+      :loading="isFastCheck"
+      @click="handleFastCheck"
+      >快速审核</el-button
+    >
     <el-table
       v-loading="tableLoading"
       v-el-table-infinite-scroll="loadNextPage"
@@ -119,7 +126,8 @@
             type="primary"
             size="small"
             @click="handleShowDialog(true, scope.row.id, scope.row.ruleType)"
-          >审核</el-button>
+            >审核</el-button
+          >
           <el-button
             v-if="
               ['已审核', '已作废'].includes(
@@ -129,7 +137,8 @@
             type="primary"
             size="small"
             @click="handleShowDialog(false, scope.row.id, scope.row.ruleType)"
-          >查看</el-button>
+            >查看</el-button
+          >
         </template>
       </el-table-column>
       <!-- <el-table-column type="index" label="序号" width="50">
@@ -184,16 +193,16 @@
         <div class="audit-dialog-content-left">
           <div class="evidence-block">
             <div class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceBigPhoto1}`" alt>
+              <img :src="`${imgOrigin}/${info.evidenceBigPhoto1}`" alt />
             </div>
             <div v-if="ruleType < 3" class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceBigPhoto2}`" alt>
+              <img :src="`${imgOrigin}/${info.evidenceBigPhoto2}`" alt />
             </div>
           </div>
           <div class="license-block">
             <div class="license-block-imgDiv">
               <div class="title">当事人</div>
-              <img :src="`${imgOrigin}/${info.evidencePhoto}`" alt>
+              <img :src="`${imgOrigin}/${info.evidencePhoto}`" alt />
             </div>
             <div class="license-block-imgDiv">
               <div class="title">推荐/车主</div>
@@ -204,7 +213,7 @@
                     : info.facePhoto
                 }`"
                 alt
-              >
+              />
             </div>
             <div class="license-block-tipDiv">
               <div>
@@ -229,7 +238,7 @@
         <div class="audit-dialog-content-right">
           <div v-if="ruleType < 3" class="evidence-block">
             <div class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceSmallPhoto}`" alt>
+              <img :src="`${imgOrigin}/${info.evidenceSmallPhoto}`" alt />
             </div>
             <div class="evidence-block-imgDiv">
               <video
@@ -254,7 +263,7 @@
               }"
               @click="handleSelectFaceImg(item.id)"
             >
-              <img :src="`${imgOrigin}/${item.facePhoto}`" alt>
+              <img :src="`${imgOrigin}/${item.facePhoto}`" alt />
               <div class="name">
                 {{ item.ruleName }}
                 <span>{{ item.similarity }}</span>
@@ -337,7 +346,8 @@
                         type="primary"
                         :loading="checkLicensePlateLoading"
                         @click="handleCheckLicensePlate"
-                      >校验</el-button>
+                        >校验</el-button
+                      >
                     </div>
                     <div v-else>{{ info.licensePlate }}</div>
                   </el-form-item>
@@ -375,11 +385,13 @@
           type="primary"
           :loading="confirmLoading"
           @click="handleAuditOrInvaild(true)"
-        >审核</el-button>
+          >审核</el-button
+        >
         <el-button
           :loading="confirmLoading"
           @click="handleAuditOrInvaild(false)"
-        >作废</el-button>
+          >作废</el-button
+        >
         <el-button @click="handleCancel">取消</el-button>
       </div>
     </el-dialog>
@@ -387,56 +399,56 @@
 </template>
 
 <script>
-import elTableInfiniteScroll from 'el-table-infinite-scroll'
-import moment from 'moment'
-import axios from '@/utils/request'
-import { apiDomain } from '@/utils/config'
+import elTableInfiniteScroll from "el-table-infinite-scroll";
+import moment from "moment";
+import axios from "@/utils/request";
+import { apiDomain } from "@/utils/config";
 
 export default {
   directives: {
-    'el-table-infinite-scroll': elTableInfiniteScroll
+    "el-table-infinite-scroll": elTableInfiniteScroll,
   },
   data() {
     return {
       defaultMessageObj: {
-        name: '',
-        time: '',
-        address: '',
-        licensePlate: '',
-        ruleType: '',
-        travelMode: ''
+        name: "",
+        time: "",
+        address: "",
+        licensePlate: "",
+        ruleType: "",
+        travelMode: "",
       },
       imgOrigin: apiDomain,
       ruleTypeMap: new Map([
-        [0, '全部'],
-        [1, '闯红灯'],
-        [2, '越线'],
-        [6, '逆行'],
-        [3, '一车多人'],
-        [5, '无头盔'],
-        [4, '安装伞具']
+        [0, "全部"],
+        [1, "闯红灯"],
+        [2, "越线"],
+        [6, "逆行"],
+        [3, "一车多人"],
+        [5, "无头盔"],
+        [4, "安装伞具"],
       ]),
       verifyedStatusMap: new Map([
-        [0, '全部'],
-        [1, '未审核'],
-        [2, '已审核'],
-        [3, '已作废']
+        [0, "全部"],
+        [1, "未审核"],
+        [2, "已审核"],
+        [3, "已作废"],
       ]),
       handledStatusMap: new Map([
-        [0, '全部'],
-        [1, '未处理'],
-        [2, '已处理'],
-        [3, '无需处理']
+        [0, "全部"],
+        [1, "未处理"],
+        [2, "已处理"],
+        [3, "无需处理"],
       ]),
       travelModeMap: new Map([
-        [0, '全部'],
-        [1, '电动自行车'],
-        [2, '三轮车'],
-        [3, '手推车'],
-        [4, '残疾人专用车'],
-        [5, '畜力车'],
-        [6, '助力自行车'],
-        [7, '其他非机动车']
+        [0, "全部"],
+        [1, "电动自行车"],
+        [2, "三轮车"],
+        [3, "手推车"],
+        [4, "残疾人专用车"],
+        [5, "畜力车"],
+        [6, "助力自行车"],
+        [7, "其他非机动车"],
       ]),
       isFastCheck: false, // 是否快速审核中
       searchLoading: false,
@@ -454,10 +466,10 @@ export default {
         ruleType: 0,
         verifyedStatus: 0,
         handledStatus: 0,
-        licensePlateStatus: false
+        licensePlateStatus: false,
       },
       auditForm: {
-        travelMode: 1
+        travelMode: 1,
       },
       selectedRowKey: 0,
       ruleType: 0,
@@ -465,177 +477,177 @@ export default {
       dialogVisible: false,
       info: {},
       selectedHaikangKey: 0,
-      checkLicensePlateLoading: false
-    }
+      checkLicensePlateLoading: false,
+    };
   },
   computed: {
     ruleTypeOptions() {
-      const searchOptions = []
-      const operateOptions = []
+      const searchOptions = [];
+      const operateOptions = [];
       this.ruleTypeMap.forEach((key, value) => {
         const o = {
           label: key,
-          value
-        }
+          value,
+        };
         if (value) {
-          operateOptions.push(o)
+          operateOptions.push(o);
         }
-        searchOptions.push(o)
-      })
+        searchOptions.push(o);
+      });
       return {
         searchOptions,
-        operateOptions
-      }
+        operateOptions,
+      };
     },
     verifyedStatusOptions() {
-      const searchOptions = []
-      const operateOptions = []
+      const searchOptions = [];
+      const operateOptions = [];
       this.verifyedStatusMap.forEach((key, value) => {
         const o = {
           label: key,
-          value
-        }
+          value,
+        };
         if (value) {
-          operateOptions.push(o)
+          operateOptions.push(o);
         }
-        searchOptions.push(o)
-      })
+        searchOptions.push(o);
+      });
       return {
         searchOptions,
-        operateOptions
-      }
+        operateOptions,
+      };
     },
     handledStatusOptions() {
-      const searchOptions = []
-      const operateOptions = []
+      const searchOptions = [];
+      const operateOptions = [];
       this.handledStatusMap.forEach((key, value) => {
         const o = {
           label: key,
-          value
-        }
+          value,
+        };
         if (value) {
-          operateOptions.push(o)
+          operateOptions.push(o);
         }
-        searchOptions.push(o)
-      })
+        searchOptions.push(o);
+      });
       return {
         searchOptions,
-        operateOptions
-      }
+        operateOptions,
+      };
     },
     travelModeOptions() {
-      const searchOptions = []
-      const operateOptions = []
+      const searchOptions = [];
+      const operateOptions = [];
       this.travelModeMap.forEach((key, value) => {
         const o = {
           label: key,
-          value
-        }
+          value,
+        };
         if (value) {
-          operateOptions.push(o)
+          operateOptions.push(o);
         }
-        searchOptions.push(o)
-      })
+        searchOptions.push(o);
+      });
       return {
         searchOptions,
-        operateOptions
-      }
+        operateOptions,
+      };
     },
     searchParams() {
-      const result = {}
+      const result = {};
       Object.keys(this.form).forEach((key) => {
         if (
           this.form[key] ||
           this.form[key] === 0 ||
           this.form[key] === false
         ) {
-          if (key === 'ruleAt' && this.form[key] && this.form[key].length > 0) {
-            const [begin, end] = this.form[key]
-            result.ruleBeginAt = moment(begin).format('YYYY-MM-DD HH:mm:ss')
-            result.ruleEndAt = moment(end).format('YYYY-MM-DD HH:mm:ss')
-          } else if (key === 'similarity') {
-            result[key] = Number(this.form[key])
-          } else if (key === 'licensePlateStatus') {
-            result[key] = this.form[key] ? 2 : 0
+          if (key === "ruleAt" && this.form[key] && this.form[key].length > 0) {
+            const [begin, end] = this.form[key];
+            result.ruleBeginAt = moment(begin).format("YYYY-MM-DD HH:mm:ss");
+            result.ruleEndAt = moment(end).format("YYYY-MM-DD HH:mm:ss");
+          } else if (key === "similarity") {
+            result[key] = Number(this.form[key]);
+          } else if (key === "licensePlateStatus") {
+            result[key] = this.form[key] ? 2 : 0;
           } else {
-            result[key] = this.form[key]
+            result[key] = this.form[key];
           }
         }
-      })
-      return result
+      });
+      return result;
     },
     selectedHaikang() {
       let result = {};
       (this.info.haikang || []).forEach((item) => {
         if (item.id === this.selectedHaikangKey) {
-          result = item
-          this.defaultMessageObj.name = item.ruleName
-          this.auditForm.message = this.defaultMessage()
+          result = item;
+          this.defaultMessageObj.name = item.ruleName;
+          this.auditForm.message = this.defaultMessage();
         }
-      })
-      return result
-    }
+      });
+      return result;
+    },
   },
   watch: {
     dialogVisible(value) {
       if (!value) {
         this.auditForm = {
           travelMode: 1,
-          message: ''
-        }
+          message: "",
+        };
       }
-    }
+    },
   },
   mounted() {
     // this.getTableData()
-    this.getStatisticalData()
+    this.getStatisticalData();
   },
   methods: {
     idCard(text) {
-      return text ? `******${String(text).substr(6, 8)}****` : ''
+      return text ? `******${String(text).substr(6, 8)}****` : "";
     },
     getTableData() {
-      this.tableLoading = true
+      this.tableLoading = true;
       axios
-        .post('/api/rules/search', {
+        .post("/api/rules/search", {
           pageNo: this.pageNo,
           pageSize: this.pageSize,
-          ...this.searchParams
+          ...this.searchParams,
         })
         .then((res) => {
-          const { data, pageNo, pageSize, totalCount } = res.data
-          this.pageNo = pageNo
-          this.pageSize = pageSize
-          this.total = totalCount
+          const { data, pageNo, pageSize, totalCount } = res.data;
+          this.pageNo = pageNo;
+          this.pageSize = pageSize;
+          this.total = totalCount;
           // this.dataSource = data
           // 判断是否还有下一页数据
           if (data.length < pageSize) {
-            this.hasNextPageData = false
+            this.hasNextPageData = false;
           }
           // 第一页时候重置当前表格数据
           if (this.pageNo === 1) {
-            this.dataSource = data
+            this.dataSource = data;
           } else {
-            this.dataSource = this.dataSource.concat(data)
+            this.dataSource = this.dataSource.concat(data);
           }
           // 页码自增
-          this.pageNo = (this.pageNo + 1)
-          this.tableLoading = false
+          this.pageNo = this.pageNo + 1;
+          this.tableLoading = false;
         })
         .catch(() => {
-          this.$message.error('获取违法数据失败')
-          this.tableLoading = false
-        })
+          this.$message.error("获取违法数据失败");
+          this.tableLoading = false;
+        });
     },
     getStatisticalData() {
-      axios.get('/api/times').then((res) => {
+      axios.get("/api/times").then((res) => {
         const {
-          data: { getNumber, verifyedNumber, voidNumber }
-        } = res
-        this.count1 = getNumber
-        this.count2 = verifyedNumber
-        this.count3 = voidNumber
-      })
+          data: { getNumber, verifyedNumber, voidNumber },
+        } = res;
+        this.count1 = getNumber;
+        this.count2 = verifyedNumber;
+        this.count3 = voidNumber;
+      });
     },
     // selectRuleType(value) {
     //   // 查询条件
@@ -643,50 +655,53 @@ export default {
     // },
     async handleSearch() {
       // 查询
-      this.hasNextPageData = true
-      this.pageNo = 1
-      this.searchLoading = true
-      await this.getTableData()
-      this.searchLoading = false
+      this.hasNextPageData = true;
+      this.pageNo = 1;
+      this.searchLoading = true;
+      await this.getTableData();
+      this.searchLoading = false;
     },
     loadNextPage() {
       if (this.hasNextPageData) {
-        this.getTableData()
+        this.getTableData();
       }
     },
     closeCheckDialog() {
-      this.isFastCheck = false
+      this.isFastCheck = false;
     },
     handleFastCheck() {
       // 快速审核
-      this.isFastCheck = true
-      axios.get('/api/rule/unverified').then((res) => {
-        const { id, ruleType } = res.data
-        this.handleShowDialog(true, id, ruleType)
-      }).catch((err) => {
-        this.isFastCheck = false
-        // 最后一条审核完后关闭弹框
-        this.dialogVisible = false
-        const { returnMessage } = err.response.data
-        this.$message.error(returnMessage || '没有需要审核的数据了')
-      })
+      this.isFastCheck = true;
+      axios
+        .get("/api/rule/unverified")
+        .then((res) => {
+          const { id, ruleType } = res.data;
+          this.handleShowDialog(true, id, ruleType);
+        })
+        .catch((err) => {
+          this.isFastCheck = false;
+          // 最后一条审核完后关闭弹框
+          this.dialogVisible = false;
+          const { returnMessage } = err.response.data;
+          this.$message.error(returnMessage || "没有需要审核的数据了");
+        });
     },
     handleCurrentChange(value) {
       // 改变页码
-      this.pageNo = value
-      this.getTableData()
+      this.pageNo = value;
+      this.getTableData();
     },
     auditRuleTypeChange(e) {
-      this.defaultMessageObj.ruleType = this.ruleTypeMap.get(e)
-      this.auditForm.message = this.defaultMessage()
+      this.defaultMessageObj.ruleType = this.ruleTypeMap.get(e);
+      this.auditForm.message = this.defaultMessage();
     },
     auditTravelModeChange(e) {
-      this.defaultMessageObj.travelMode = this.travelModeMap.get(e)
-      this.auditForm.message = this.defaultMessage()
+      this.defaultMessageObj.travelMode = this.travelModeMap.get(e);
+      this.auditForm.message = this.defaultMessage();
     },
     auditLicensePlateChange(e) {
-      this.defaultMessageObj.licensePlate = e
-      this.auditForm.message = this.defaultMessage()
+      this.defaultMessageObj.licensePlate = e;
+      this.auditForm.message = this.defaultMessage();
     },
     defaultMessage() {
       const {
@@ -695,105 +710,109 @@ export default {
         address,
         licensePlate,
         ruleType,
-        travelMode
-      } = this.defaultMessageObj
-      return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`
+        travelMode,
+      } = this.defaultMessageObj;
+      return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`;
     },
     handleShowDialog(isAudit, id, ruleType) {
-      this.tableLoading = true
-      this.selectedRowKey = id
-      this.ruleType = ruleType
-      this.isAudit = isAudit
+      this.tableLoading = true;
+      this.selectedRowKey = id;
+      this.ruleType = ruleType;
+      this.isAudit = isAudit;
       axios
         .get(`/api/rules/${this.selectedRowKey}`)
         .then((res) => {
-          const { data } = res
+          const { data } = res;
           if (isAudit) {
             if (this.ruleType >= 3) {
               axios
                 .get(`/api/rules/${this.selectedRowKey}/faces`)
                 .then((res2) => {
-                  const { data: data2 } = res2
+                  const { data: data2 } = res2;
                   this.info = {
                     ...data,
                     haikang: (data2 || []).map((item, index) => ({
                       ...item,
-                      id: index + 1
-                    }))
-                  }
+                      id: index + 1,
+                    })),
+                  };
                   this.selectedHaikangKey =
-                    data2 && data2.length > 0 ? data2[0].id : 0
+                    data2 && data2.length > 0 ? data2[0].id : 0;
                   this.defaultMessageObj = {
                     name: this.selectedHaikang.ruleName,
                     time: this.info.ruleAt,
-                    address: this.info.ruleplace || '',
-                    licensePlate: this.info.licensePlate || '',
+                    address: this.info.ruleplace || "",
+                    licensePlate: this.info.licensePlate || "",
                     ruleType: this.ruleTypeMap.get(data.ruleType || 1), // 违法类型 默认闯红灯
-                    travelMode: this.travelModeMap.get(data.travelMode || 1) // 出行方式 默认电动自行车
-                  }
+                    travelMode: this.travelModeMap.get(data.travelMode || 1), // 出行方式 默认电动自行车
+                  };
                   this.auditForm = {
                     ruleType: data.ruleType || 1, // 违法类型 默认闯红灯
                     travelMode: data.travelMode || 1, // 出行方式 默认电动自行车
                     licensePlate: data.licensePlate,
-                    message: this.defaultMessage()
-                  }
-                  this.dialogVisible = true
-                  this.tableLoading = false
+                    message: this.defaultMessage(),
+                  };
+                  this.dialogVisible = true;
+                  this.tableLoading = false;
                 })
                 .catch(() => {
-                  this.tableLoading = false
-                })
+                  this.tableLoading = false;
+                });
             } else {
               this.info = {
-                ...data
-              }
+                ...data,
+              };
               this.defaultMessageObj = {
                 name: this.info.ruleName,
                 time: this.info.ruleAt,
-                address: this.info.ruleplace || '',
-                licensePlate: this.info.licensePlate || '',
+                address: this.info.ruleplace || "",
+                licensePlate: this.info.licensePlate || "",
                 ruleType: this.ruleTypeMap.get(data.ruleType || 1), // 违法类型 默认闯红灯
-                travelMode: this.travelModeMap.get(data.travelMode || 1) // 出行方式 默认电动自行车
-              }
+                travelMode: this.travelModeMap.get(data.travelMode || 1), // 出行方式 默认电动自行车
+              };
               this.auditForm = {
                 ruleType: data.ruleType || 1, // 违法类型 默认闯红灯
                 travelMode: data.travelMode || 1, // 出行方式 默认电动自行车
                 licensePlate: data.licensePlate,
-                message: this.defaultMessage()
-              }
-              this.dialogVisible = true
-              this.tableLoading = false
+                message: this.defaultMessage(),
+              };
+              this.dialogVisible = true;
+              this.tableLoading = false;
             }
           } else {
-            this.info = data
+            this.info = data;
             this.auditForm = {
               ruleType: data.ruleType,
               travelMode: data.travelMode || 1,
               licensePlate: data.licensePlate,
-              message: data.message || ''
-            }
-            this.dialogVisible = true
-            this.tableLoading = false
+              message: data.message || "",
+            };
+            this.dialogVisible = true;
+            this.tableLoading = false;
           }
         })
         .catch(() => {
-          this.tableLoading = false
-        })
+          this.tableLoading = false;
+        });
     },
     handleSelectFaceImg(value) {
       // 选择相似信息
-      this.selectedHaikangKey = value
+      this.selectedHaikangKey = value;
     },
     handleAuditOrInvaild(isAudit) {
-      // 弹窗-审核/作废
-      if (!this.auditForm.licensePlate && this.ruleType < 3) {
-        this.$message.error('车牌号不能为空')
-        return
+
+      if (isAudit === true) {
+        // 弹窗-审核/作废
+        if (!this.auditForm.licensePlate && this.ruleType < 3) {
+          this.$message.error("车牌号不能为空");
+          return;
+        }
+        if (!this.auditForm.message) {
+          this.$message.error("短信模板不能为空");
+          return;
+        }
       }
-      if (!this.auditForm.message) {
-        this.$message.error('短信模板不能为空')
-        return
-      }
+
       /**
        * this.info.facePhoto = data.facePhoto
             this.info.license = data.license
@@ -803,7 +822,7 @@ export default {
       const params = {
         id: this.selectedRowKey,
         verifyedStatus: isAudit ? 2 : 3,
-        verifyedName: localStorage.getItem('username'),
+        verifyedName: localStorage.getItem("username"),
         ...this.auditForm,
         facePhoto:
           this.ruleType >= 3
@@ -825,71 +844,72 @@ export default {
             : this.info.telephone,
         handledStatus: this.info.handledStatus,
         licensePlateStatus: this.info.licensePlateStatus,
-        verifyedAt: moment().format('YYYY-MM-DD HH:mm:ss')
-      }
+        verifyedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      };
       if (isAudit) {
-        params.verifyedStatus = 2
+        params.verifyedStatus = 2;
       } else {
-        params.verifyedStatus = 3
+        params.verifyedStatus = 3;
       }
-      this.confirmLoading = true
+      this.confirmLoading = true;
       axios
-        .put('/api/rules', params)
+        .put("/api/rules", params)
         .then(() => {
           // 重置初始条件
-          this.hasNextPageData = true
-          this.pageNo = 1
-          this.getTableData()
+          this.hasNextPageData = true;
+          this.pageNo = 1;
+          this.getTableData();
           // 重新获取最上面的数字
-          this.getStatisticalData()
-          this.confirmLoading = false
+          this.getStatisticalData();
+          this.confirmLoading = false;
           // 如果是快速审核装状态
           if (this.isFastCheck) {
-            this.handleFastCheck()
+            this.handleFastCheck();
           } else {
-            this.dialogVisible = false
+            this.dialogVisible = false;
           }
         })
         .catch(() => {
-          this.confirmLoading = false
-        })
+          this.confirmLoading = false;
+        });
     },
     handleCancel() {
       // 弹窗-取消
-      this.dialogVisible = false
+      this.dialogVisible = false;
     },
     handleCheckLicensePlate() {
       // 校验车牌号
-      this.checkLicensePlateLoading = true
+      this.checkLicensePlateLoading = true;
       axios
         .get(`/api/licenseplate/${this.auditForm.licensePlate}`)
         .then((res) => {
-          const { data } = res
+          const { data } = res;
           if (this.ruleType >= 3) {
             // this.selectedHaikang.facePhoto = data.facePhoto
             // this.selectedHaikang.license = data.license
             // this.selectedHaikang.ruleName = data.ruleName
             // this.selectedHaikang.telephone = data.telephone
           } else {
-            this.info.facePhoto = data.facePhoto
-            this.info.license = data.license
-            this.info.ruleName = data.ruleName
-            this.info.telephone = data.telephone
+            this.info.facePhoto = data.facePhoto;
+            this.info.license = data.license;
+            this.info.ruleName = data.ruleName;
+            this.info.telephone = data.telephone;
           }
-          this.defaultMessageObj.name = data.ruleName
-          this.auditForm.message = this.defaultMessage()
-          this.checkLicensePlateLoading = false
+          this.defaultMessageObj.name = data.ruleName;
+          this.auditForm.message = this.defaultMessage();
+          this.checkLicensePlateLoading = false;
         })
         .catch(() => {
-          this.checkLicensePlateLoading = false
-        })
-    }
-  }
-}
+          this.checkLicensePlateLoading = false;
+        });
+    },
+  },
+};
 </script>
 
 <style lang="scss">
-.el-table td, .el-table th {
+.el-table td,
+.el-table th {
   padding: 5px 0;
 }
 .ruleType-buttons {
@@ -993,7 +1013,7 @@ export default {
             height: 100%;
           }
         }
-        &-imgDiv:last-child{
+        &-imgDiv:last-child {
           background-color: #000;
         }
       }

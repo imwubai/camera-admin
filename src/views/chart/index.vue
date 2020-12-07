@@ -572,7 +572,7 @@ export default {
       setFirstDialogVisible: false,
       radio: "1",
       contrastRatiosData: [], // 对比率
-      roadOptions: [], // 路口下拉框数据
+      roadOptions: [{ label: "全部", value: "-1" }], // 路口下拉框数据
       date1: [
         `${moment()
           .subtract(weekOfday + 6, "days")
@@ -674,7 +674,7 @@ export default {
           value: item.crossingId,
         }));
 
-        this.roadOptions.unshift({ label: "全部", value: "-1" });
+        // this.roadOptions.unshift({ label: "全部", value: "-1" });
       }); // 路口数据接口
 
     this.chart1 = echarts.init(this.$refs.chart1);
