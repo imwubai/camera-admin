@@ -17,7 +17,7 @@
         载人 <span>{{ moreNum }}</span>
       </div>
       <div class="tipBlock">
-        未带头盔 <span>{{ noHelmetNum }}</span>
+        未戴头盔 <span>{{ noHelmetNum }}</span>
       </div>
       <div class="tipBlock">
         安装伞具 <span>{{ umbrellasNum }}</span>
@@ -509,7 +509,7 @@ const data20 = [
   },
   {
     id: 5,
-    name: "未带头盔",
+    name: "未戴头盔",
     value1: 12,
     value2: 6,
   },
@@ -548,7 +548,7 @@ var data200 = [
 
 const weekOfday = moment().weekday(); // 计算今天是周几
 const now = moment().locale("zh-cn").format("YYYY-MM-DD "); // 获取当天的日期
-const rule_name = ["闯红灯", "越线", "伞具", "未带头盔", "载人", "逆行"];
+const rule_name = ["闯红灯", "越线", "伞具", "未戴头盔", "载人", "逆行"];
 export default {
   data() {
     return {
@@ -601,7 +601,7 @@ export default {
 
   mounted() {
     axios
-      .post("/api/rule/search_screen", {
+      .post("/api/rule/search-screen", {
         startTime: now + "00:00:00",
         endTime: now + "23:59:59",
         screenType: parseInt(this.classify),
@@ -650,7 +650,7 @@ export default {
             case "伞具":
               this.contrastRatiosData[4] = contrastRatio;
               break;
-            case "未带头盔":
+            case "未戴头盔":
               this.contrastRatiosData[5] = contrastRatio;
               break;
           }
@@ -698,7 +698,7 @@ export default {
           case "伞具":
             this.umbrellasNum = sum;
             break;
-          case "未带头盔":
+          case "未戴头盔":
             this.noHelmetNum = sum;
             break;
           case "逆行":
@@ -807,7 +807,7 @@ export default {
                 data: this.dataArray[2],
               },
               {
-                name: "未带头盔",
+                name: "未戴头盔",
                 type: "bar",
                 stack: "总量",
                 label: {
@@ -1124,7 +1124,7 @@ export default {
               case "伞具":
                 this.contrastRatiosData[4] = contrastRatio;
                 break;
-              case "未带头盔":
+              case "未戴头盔":
                 this.contrastRatiosData[5] = contrastRatio;
                 break;
             }
@@ -1146,7 +1146,7 @@ export default {
       } else if (this.datetime1 && this.datetime2 != null) {
         this.setFirstDialogVisible = false;
         axios
-          .post("/api/rule/search_screen", {
+          .post("/api/rule/search-screen", {
             startTime: this.datetime1,
             endTime: this.datetime2,
             screenType: parseInt(this.classify),

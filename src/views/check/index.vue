@@ -31,7 +31,14 @@
       <el-row :gutter="20">
         <el-col :span="5">
           <el-form-item label="违法地点">
-            <el-input v-model="form.rulePlace" placeholder="请输入" />
+            <el-select v-model="form.rulePlace" placeholder="请选择">
+              <el-option
+                v-for="item in statusOptions"
+                :key="item.crossingName"
+                :label="item.crossingName"
+                :value="item.crossingName"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="5">
@@ -54,6 +61,7 @@
               range-separator="至"
               start-placeholder="开始日期"
               end-placeholder="结束日期"
+              value-format="yyyy-MM-dd HH:mm:ss"
             />
           </el-form-item>
         </el-col>
@@ -109,6 +117,9 @@
       :loading="isFastCheck"
       @click="handleFastCheck"
       >快速审核</el-button
+    >
+    <el-button class="fastCheck" type="primary" @click="exportView"
+      >导出视图</el-button
     >
     <el-table
       v-loading="tableLoading"
@@ -181,30 +192,78 @@
       />
     </div> -->
     <el-dialog
+      title
+      :visible.sync="imgViewDialogVisible"
+      class="imgView-dialog"
+      :modal="false"
+      style="width: 130%"
+    >
+      <div class="main">
+        <img class="img" width="100%" :src="imgViewDialog_imgSrc" />
+      </div>
+    </el-dialog>
+    <!--放大图片的对话框-->
+    <el-dialog 
       class="audit-dialog"
       :title="isAudit ? '审核' : '查看'"
       :visible.sync="dialogVisible"
-      width="1200px"
+       width="1200px"
       :destroy-on-close="true"
       :lock-scroll="false"
-      @close="closeCheckDialog"
+      @close="closeCheckDialog()"
     >
       <div class="audit-dialog-content">
         <div class="audit-dialog-content-left">
           <div class="evidence-block">
-            <div class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceBigPhoto1}`" alt />
+            <div class="evidence-block-imgDiv"   style=" position: relative;">
+              <img
+                :src="`${imgOrigin}/${info.evidenceBigPhoto1}`"
+                class="avatar"
+                @click="imgViewDialog_show()"
+                id="downloadImage"
+                style="width:100%;"
+              />
+              <el-button
+            
+              type="primary"
+              style="position: absolute; bottom: 1%; left: 70%"
+              @click="downPic(imgsrc)"
+              >下载<i class="el-icon-download"></i
+            ></el-button>
             </div>
-            <div v-if="ruleType < 3" class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceBigPhoto2}`" alt />
+
+            <div v-if="ruleType < 3" class="evidence-block-imgDiv"  style=" position: relative;">
+              <img
+                :src="`${imgOrigin}/${info.evidenceBigPhoto2}`"
+                 @click="imgViewDialog_show1()"
+                id="downloadImage1"
+              />
+              <el-button
+              type="primary"
+              style="position: absolute; bottom: 1%; left: 70%"
+              @click="downPic1(imgsrc)"
+              >下载<i class="el-icon-download"></i
+            ></el-button>
             </div>
           </div>
           <div class="license-block">
-            <div class="license-block-imgDiv">
+            <div class="license-block-imgDiv" style=" position: relative;">
               <div class="title">当事人</div>
-              <img :src="`${imgOrigin}/${info.evidencePhoto}`" alt />
+              <img
+                :src="`${imgOrigin}/${info.evidencePhoto}`"
+                id="downloadImage3"
+             
+                alt
+              />
+
+              <!-- <el-button
+              type="primary"
+              style="position: absolute; bottom:1%; left: 40%"
+              @click="downPic3(imgsrc)"
+              >下载<i class="el-icon-download"></i
+            ></el-button> -->
             </div>
-            <div class="license-block-imgDiv">
+            <div class="license-block-imgDiv" style=" position: relative;">
               <div class="title">推荐/车主</div>
               <img
                 :src="`${imgOrigin}/${
@@ -212,8 +271,16 @@
                     ? selectedHaikang.facePhoto
                     : info.facePhoto
                 }`"
+                id="downloadImage4"
                 alt
               />
+
+              <!-- <el-button
+              type="primary"
+              style="position: absolute; bottom: 1%; left: 40%"
+              @click="downPic4(imgsrc)"
+              >下载<i class="el-icon-download"></i
+            ></el-button> -->
             </div>
             <div class="license-block-tipDiv">
               <div>
@@ -237,8 +304,20 @@
         </div>
         <div class="audit-dialog-content-right">
           <div v-if="ruleType < 3" class="evidence-block">
-            <div class="evidence-block-imgDiv">
-              <img :src="`${imgOrigin}/${info.evidenceSmallPhoto}`" alt />
+            <div class="evidence-block-imgDiv" style=" position: relative;">
+              <img
+                :src="`${imgOrigin}/${info.evidenceSmallPhoto}`"
+                alt
+                id="downloadImage2"
+                     @click="imgViewDialog_show2()"
+              />
+
+              <el-button
+                type="primary"
+                style="position: absolute; bottom: 1%; left: 70%"
+                @click="downPic2(imgsrc)"
+                >下载<i class="el-icon-download"></i
+              ></el-button>
             </div>
             <div class="evidence-block-imgDiv">
               <video
@@ -403,7 +482,6 @@ import elTableInfiniteScroll from "el-table-infinite-scroll";
 import moment from "moment";
 import axios from "@/utils/request";
 import { apiDomain } from "@/utils/config";
-
 export default {
   directives: {
     "el-table-infinite-scroll": elTableInfiniteScroll,
@@ -424,7 +502,7 @@ export default {
         [1, "闯红灯"],
         [2, "越线"],
         [6, "逆行"],
-        [3, "一车多人"],
+        [3, "载人"],
         [5, "无头盔"],
         [4, "安装伞具"],
       ]),
@@ -478,6 +556,12 @@ export default {
       info: {},
       selectedHaikangKey: 0,
       checkLicensePlateLoading: false,
+      imgsrc: [
+        "https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2933817164,3846927131&fm=26&gp=0.jpg",
+      ],
+      statusOptions: [],
+      imgViewDialogVisible: false, // 控制dialog显示隐藏
+      imgViewDialog_imgSrc: "", // 控制图片src
     };
   },
   computed: {
@@ -598,11 +682,206 @@ export default {
       }
     },
   },
+
   mounted() {
-    // this.getTableData()
     this.getStatisticalData();
+    axios
+      .get("/api/crossings")
+      .then((res) => {
+        this.statusOptions = res.data.map((i) => {
+          return i;
+        });
+
+        // console.log(this.statusOptions)
+        // 第一个追加全部
+        this.statusOptions.unshift({
+          crossingId: 0,
+          crossingName: "全部",
+        });
+      })
+      .catch(() => {
+        this.$message.error("获取违法地点失败");
+      });
   },
   methods: {
+    /**
+     * 图片dialog_显示
+     */
+    imgViewDialog_show: function (src) {
+      console.log(document.getElementById("downloadImage").src);
+
+      this.imgViewDialogVisible = true;
+      this.imgViewDialog_imgSrc = document.getElementById("downloadImage").src;
+    },// 第一张图放大
+
+
+  imgViewDialog_show1: function (src) {
+      console.log(document.getElementById("downloadImage1").src);
+
+      this.imgViewDialogVisible = true;
+      this.imgViewDialog_imgSrc = document.getElementById("downloadImage1").src;
+    },// 第二张图放大
+
+
+ imgViewDialog_show2: function (src) {
+      console.log(document.getElementById("downloadImage2").src);
+
+      this.imgViewDialogVisible = true;
+      this.imgViewDialog_imgSrc = document.getElementById("downloadImage2").src;
+    },// 第三张图放大
+
+    /**
+     * 图片dialog_关闭
+     */
+    imgViewDialog_close: function () {
+      this.imgViewDialogVisible = false;
+      var self = this;
+      setTimeout(function () {
+        self.imgViewDialog_imgSrc = "";
+      }, 100);
+    },
+
+        downPic(src) {
+
+          // console.log(src);
+
+          // console.log(document.getElementById("downloadImage").src);
+          src = document.getElementById("downloadImage").src;
+    let imgName = decodeURIComponent(src.substring(31))
+          var canvas = document.createElement("canvas");
+          var img = document.createElement("img");
+          img.onload = function (e) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var context = canvas.getContext("2d");
+            context.drawImage(img, 0, 0, img.width, img.height);
+            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+            canvas.toBlob((blob) => {
+              var link = document.createElement("a");
+              link.href = window.URL.createObjectURL(blob);
+              link.download = imgName;
+              link.click();
+            }, "image/jpeg");
+          };
+          img.crossOrigin = "Anonymous";
+          img.src = src;
+        }, // 下载图片
+
+     downPic1(src) {
+
+          src = document.getElementById("downloadImage1").src;
+    let imgName = decodeURIComponent(src.substring(31))
+          var canvas = document.createElement("canvas");
+          var img = document.createElement("img");
+          img.onload = function (e) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var context = canvas.getContext("2d");
+            context.drawImage(img, 0, 0, img.width, img.height);
+            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+            canvas.toBlob((blob) => {
+              var link = document.createElement("a");
+              link.href = window.URL.createObjectURL(blob);
+              link.download = imgName;
+              link.click();
+            }, "image/jpeg");
+          };
+          img.crossOrigin = "Anonymous";
+          img.src = src;
+        }, // 下载图片1
+
+     downPic2(src) {
+
+          src = document.getElementById("downloadImage2").src;
+    let imgName = decodeURIComponent(src.substring(31))
+          var canvas = document.createElement("canvas");
+          var img = document.createElement("img");
+          img.onload = function (e) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var context = canvas.getContext("2d");
+            context.drawImage(img, 0, 0, img.width, img.height);
+            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+            canvas.toBlob((blob) => {
+              var link = document.createElement("a");
+              link.href = window.URL.createObjectURL(blob);
+              link.download = imgName;
+              link.click();
+            }, "image/jpeg");
+          };
+          img.crossOrigin = "Anonymous";
+          img.src = src;
+        }, // 下载图片2
+
+     downPic3(src) {
+
+          src = document.getElementById("downloadImage3").src;
+    let imgName = decodeURIComponent(src.substring(31))
+          var canvas = document.createElement("canvas");
+          var img = document.createElement("img");
+          img.onload = function (e) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var context = canvas.getContext("2d");
+            context.drawImage(img, 0, 0, img.width, img.height);
+            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+            canvas.toBlob((blob) => {
+              var link = document.createElement("a");
+              link.href = window.URL.createObjectURL(blob);
+              link.download = imgName;
+              link.click();
+            }, "image/jpeg");
+          };
+          img.crossOrigin = "Anonymous";
+          img.src = src;
+        }, // 下载图片3
+
+     downPic4(src) {
+
+          src = document.getElementById("downloadImage4").src;
+    let imgName = decodeURIComponent(src.substring(31))
+          var canvas = document.createElement("canvas");
+          var img = document.createElement("img");
+          img.onload = function (e) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var context = canvas.getContext("2d");
+            context.drawImage(img, 0, 0, img.width, img.height);
+            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+            canvas.toBlob((blob) => {
+              var link = document.createElement("a");
+              link.href = window.URL.createObjectURL(blob);
+              link.download = imgName;
+              link.click();
+            }, "image/jpeg");
+          };
+          img.crossOrigin = "Anonymous";
+          img.src = src;
+        }, // 下载图片4
+    exportView() {
+      //  console.log(window.location.host) // 打印当前url+端口号
+
+      if (this.form.ruleAt === undefined) {
+        this.$message.error("请先选择采集时间");
+        return;
+      }
+      axios
+        .post("/api/download-path", {
+          startTime: this.form.ruleAt[0],
+          endTime: this.form.ruleAt[1],
+          info: String(this.form.ruleType),
+          type: "illegal_image",
+        })
+        .then((res) => {
+          if (res.data.path === "") {
+            this.$message.error(res.data.explain);
+          } else {
+            self.location.href = "http://192.168.1.65:8083/" + res.data.path;
+          }
+        })
+        .catch(() => {});
+    }, // 导出视图
+
     idCard(text) {
       return text ? `******${String(text).substr(6, 8)}****` : "";
     },
@@ -667,6 +946,7 @@ export default {
       }
     },
     closeCheckDialog() {
+    
       this.isFastCheck = false;
     },
     handleFastCheck() {
@@ -715,6 +995,15 @@ export default {
       return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`;
     },
     handleShowDialog(isAudit, id, ruleType) {
+
+// console.log(isAudit, id,ruleType)
+
+// if(isAudit === false &&  ruleType === 1){
+//   // console.log(document.getElementById('download'))
+//   // console.log(11111)
+// }
+
+
       this.tableLoading = true;
       this.selectedRowKey = id;
       this.ruleType = ruleType;
@@ -800,7 +1089,6 @@ export default {
       this.selectedHaikangKey = value;
     },
     handleAuditOrInvaild(isAudit) {
-
       if (isAudit === true) {
         // 弹窗-审核/作废
         if (!this.auditForm.licensePlate && this.ruleType < 3) {
