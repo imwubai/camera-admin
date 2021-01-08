@@ -45,6 +45,32 @@ const userRoutes = [
     ]
   },
   {
+    path: '/Details/searchData',
+    component: Layout,
+    children: [
+      {
+        path: '/searchData',
+        name: 'switch',
+        component: () => import('@/views/Details/searchData'),
+        meta: { title: '路口监控', icon: 'el-icon-monitor' }
+      }
+    ]
+  },
+
+  {
+    path: '/Details/test',
+    component: Layout,
+    children: [
+      {
+        path: '/test',
+        name: 'switch',
+        component: () => import('@/views/Details/test'),
+        meta: { title: '数据统计', icon: 'el-icon-set-up' }
+
+      }
+    ]
+  },
+  {
     path: '/changepw',
     component: Layout,
     hidden: true,

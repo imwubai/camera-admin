@@ -1,7 +1,8 @@
 <template>
-  <div class="navbar">
-    <hamburger :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" />
+  <div class="navbar" v-if="isNav">
+    <hamburger :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar"  />
 
+      
     <!-- <breadcrumb class="breadcrumb-container" /> -->
 
     <div class="right-menu">
@@ -26,11 +27,20 @@
 import { mapGetters } from 'vuex'
 // import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
+import VueRouter from 'vue-router'
 
 export default {
+
+    data(){
+return{
+  isNav:true
+} 
+    },
+
   components: {
     // Breadcrumb,
-    Hamburger
+    Hamburger,
+
   },
   computed: {
     ...mapGetters([
@@ -38,10 +48,28 @@ export default {
       'avatar'
     ])
   },
+  watch: {
+    $route() {
+      // console.log(this.$route.path)
+    if(this.$route.path === '/test'){
+      this.isNav = false
+    }else{
+         this.isNav = true
+    }
+    }
+  },
+
   mounted() {
     document.querySelector('#nav_username').innerHTML = localStorage.getItem('username')
+ 
+   
+ 
+
   },
   methods: {
+    setUser:function(){
+        this.$emit('transfer',this.user)//将值绑定到transfer上传递过去
+      },
     toggleSideBar() {
       this.$store.dispatch('app/toggleSideBar')
     },

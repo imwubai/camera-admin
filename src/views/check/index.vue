@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <!--最上面采集量-->
     <div class="table-footer">
       <div class="table-footer-block">
         <i class="el-icon-view" />今日采集量：
@@ -14,14 +15,7 @@
         <span>{{ count3 }}</span>
       </div>
     </div>
-    <!-- <div class="ruleType-buttons">
-      <block v-for="[key, value] in ruleTypeMap.entries()" :key="key">
-        <el-button
-          :type="form.ruleType === key ? 'primary' : ''"
-          @click="selectRuleType(key)"
-        >{{ value }}</el-button>
-      </block>
-    </div> -->
+    <!--查询表单-->
     <el-form
       ref="form"
       class="roadposition_form"
@@ -118,8 +112,12 @@
       @click="handleFastCheck"
       >快速审核</el-button
     >
-    <el-button class="fastCheck" type="primary" @click="exportView"
+    <el-button class="fastCheck" type="primary" @click="exportView()"
       >导出视图</el-button
+    >
+
+    <el-button class="fastCheck" type="primary" @click="exportExecl()"
+      >导出报表</el-button
     >
     <el-table
       v-loading="tableLoading"
@@ -130,6 +128,7 @@
       border
       height="600px"
     >
+     <!--操作(审核,查看按钮)-->
       <el-table-column label="操作" width="92">
         <template slot-scope="scope">
           <el-button
@@ -145,52 +144,42 @@
                 verifyedStatusMap.get(scope.row.verifyedStatus)
               )
             "
-            type="primary"
+            :type="miStatusColor"
             size="small"
             @click="handleShowDialog(false, scope.row.id, scope.row.ruleType)"
             >查看</el-button
           >
         </template>
       </el-table-column>
-      <!-- <el-table-column type="index" label="序号" width="50">
-        <template scope="scope"><span>{{ scope.$index+(pageNo - 1) * pageSize + 1 }} </span></template>
-      </el-table-column> -->
       <el-table-column type="index" label="序号" width="50" />
-      <el-table-column prop="ruleAt" label="采集时间" />
-      <el-table-column prop="rulePlace" label="违法地点" />
-      <el-table-column prop="ruleType" label="违法类型">
+      <el-table-column prop="ruleAt" sortable label="采集时间" />
+      <el-table-column prop="rulePlace" sortable label="违法地点" />
+      <el-table-column prop="ruleType" sortable label="违法类型">
         <template slot-scope="scope">{{
           ruleTypeMap.get(scope.row.ruleType)
         }}</template>
       </el-table-column>
-      <el-table-column prop="similarity" label="相似度" />
-      <el-table-column prop="licensePlate" label="车牌号" />
-      <el-table-column prop="verifyedStatus" label="审核状态">
+      <el-table-column prop="similarity" sortable label="相似度" />
+      <el-table-column prop="licensePlate" sortable label="车牌号" />
+      <el-table-column prop="verifyedStatus" sortable label="审核状态">
         <template slot-scope="scope">{{
           scope.row.verifyedStatus
             ? verifyedStatusMap.get(scope.row.verifyedStatus)
             : ""
         }}</template>
       </el-table-column>
-      <el-table-column label="当事人处理结果">
+      <el-table-column sortable label="当事人处理结果" width="150">
         <template slot-scope="scope">{{
           scope.row.handledStatus
             ? handledStatusMap.get(scope.row.handledStatus)
             : ""
         }}</template>
       </el-table-column>
-      <el-table-column prop="verifyedAt" label="审核时间" />
-      <el-table-column prop="verifyedName" label="审核人" />
+      <el-table-column prop="verifyedAt" sortable label="审核时间" />
+      <el-table-column prop="verifyedName" sortable label="审核人" />
     </el-table>
-    <!-- <div class="table_pagination">
-      <el-pagination
-        :current-page="pageNo"
-        layout="prev, pager, next"
-        :total="total"
-        background
-        @current-change="handleCurrentChange"
-      />
-    </div> -->
+
+    <!--放大图片的对话框-->
     <el-dialog
       title
       :visible.sync="imgViewDialogVisible"
@@ -202,276 +191,322 @@
         <img class="img" width="100%" :src="imgViewDialog_imgSrc" />
       </div>
     </el-dialog>
-    <!--放大图片的对话框-->
-    <el-dialog 
+   <!--审核查看框-->
+    <el-dialog
       class="audit-dialog"
       :title="isAudit ? '审核' : '查看'"
       :visible.sync="dialogVisible"
-       width="1200px"
+      width="1200px"
       :destroy-on-close="true"
       :lock-scroll="false"
       @close="closeCheckDialog()"
     >
-      <div class="audit-dialog-content">
-        <div class="audit-dialog-content-left">
-          <div class="evidence-block">
-            <div class="evidence-block-imgDiv"   style=" position: relative;">
-              <img
-                :src="`${imgOrigin}/${info.evidenceBigPhoto1}`"
-                class="avatar"
-                @click="imgViewDialog_show()"
-                id="downloadImage"
-                style="width:100%;"
-              />
-              <el-button
-            
-              type="primary"
-              style="position: absolute; bottom: 1%; left: 70%"
-              @click="downPic(imgsrc)"
-              >下载<i class="el-icon-download"></i
-            ></el-button>
-            </div>
-
-            <div v-if="ruleType < 3" class="evidence-block-imgDiv"  style=" position: relative;">
-              <img
-                :src="`${imgOrigin}/${info.evidenceBigPhoto2}`"
-                 @click="imgViewDialog_show1()"
-                id="downloadImage1"
-              />
-              <el-button
-              type="primary"
-              style="position: absolute; bottom: 1%; left: 70%"
-              @click="downPic1(imgsrc)"
-              >下载<i class="el-icon-download"></i
-            ></el-button>
-            </div>
-          </div>
-          <div class="license-block">
-            <div class="license-block-imgDiv" style=" position: relative;">
-              <div class="title">当事人</div>
-              <img
-                :src="`${imgOrigin}/${info.evidencePhoto}`"
-                id="downloadImage3"
-             
-                alt
-              />
-
-              <!-- <el-button
-              type="primary"
-              style="position: absolute; bottom:1%; left: 40%"
-              @click="downPic3(imgsrc)"
-              >下载<i class="el-icon-download"></i
-            ></el-button> -->
-            </div>
-            <div class="license-block-imgDiv" style=" position: relative;">
-              <div class="title">推荐/车主</div>
-              <img
-                :src="`${imgOrigin}/${
-                  isAudit && ruleType >= 3
-                    ? selectedHaikang.facePhoto
-                    : info.facePhoto
-                }`"
-                id="downloadImage4"
-                alt
-              />
-
-              <!-- <el-button
-              type="primary"
-              style="position: absolute; bottom: 1%; left: 40%"
-              @click="downPic4(imgsrc)"
-              >下载<i class="el-icon-download"></i
-            ></el-button> -->
-            </div>
-            <div class="license-block-tipDiv">
-              <div>
-                身份证号：{{
-                  idCard(
-                    isAudit && ruleType >= 3
-                      ? selectedHaikang.license
-                      : info.license
-                  )
-                }}
+      <div v-if="redType">
+        <div class="audit-dialog-content">
+          <div class="audit-dialog-content-left">
+                  <div style="height:28px;"  v-if="ruleType < 3"></div>
+            <div class="evidence-block">
+         
+              <!--1图-->
+              <div class="evidence-block-imgDiv" style="position: relative">
+         
+                <img
+                  :src="`${imgOrigin}/${info.evidenceBigPhoto1}`"
+                  class="avatar"
+                  @click="imgViewDialog_show()"
+                  id="downloadImage"
+                  style="width: 100%"
+                />
+                <el-button
+                  type="primary"
+                  style="position: absolute; bottom: 1%; left: 0%"
+                  @click="downPic(imgsrc)"
+                  >下载<i class="el-icon-download"></i
+                ></el-button>
               </div>
-              <div>
-                相似度：{{
-                  isAudit && ruleType >= 3
-                    ? selectedHaikang.similarity
-                    : info.similarity
-                }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="audit-dialog-content-right">
-          <div v-if="ruleType < 3" class="evidence-block">
-            <div class="evidence-block-imgDiv" style=" position: relative;">
-              <img
-                :src="`${imgOrigin}/${info.evidenceSmallPhoto}`"
-                alt
-                id="downloadImage2"
-                     @click="imgViewDialog_show2()"
-              />
-
-              <el-button
-                type="primary"
-                style="position: absolute; bottom: 1%; left: 70%"
-                @click="downPic2(imgsrc)"
-                >下载<i class="el-icon-download"></i
-              ></el-button>
-            </div>
-            <div class="evidence-block-imgDiv">
-              <video
-                :src="`${imgOrigin}/${info.evidenceVedio}`"
-                controls="controls"
+              <!--2图-->
+              <div
+                v-if="ruleType < 3"
+                class="evidence-block-imgDiv"
+                style="position: relative"
               >
-                您的浏览器不支持。
-              </video>
-            </div>
-          </div>
-          <div
-            v-show="info.haikang && info.haikang.length > 0 && ruleType >= 3"
-            class="similarity-block"
-          >
-            <div
-              v-for="(item, index) in info.haikang"
-              :key="item.id"
-              :class="{
-                'similarity-block-imgDiv': true,
-                'similarity-block-imgDiv-selected':
-                  item.id === selectedHaikangKey,
-              }"
-              @click="handleSelectFaceImg(item.id)"
-            >
-              <img :src="`${imgOrigin}/${item.facePhoto}`" alt />
-              <div class="name">
-                {{ item.ruleName }}
-                <span>{{ item.similarity }}</span>
+                <video
+                  :src="`${imgOrigin}/${info.evidenceVedio}`"
+                  controls="controls"
+                >
+                  您的浏览器不支持。
+                </video>
+                <!-- <img
+                  :src="`${imgOrigin}/${info.evidenceBigPhoto2}`"
+                  @click="imgViewDialog_show1()"
+                  id="downloadImage1"
+                />
+                <el-button
+                  type="primary"
+                  style="position: absolute; bottom: 1%; left: 70%"
+                  @click="downPic1(imgsrc)"
+                  >下载<i class="el-icon-download"></i
+                ></el-button> -->
               </div>
-              <div class="idCard">{{ idCard(item.license) }}</div>
-              <div class="index">{{ index + 1 }}</div>
-              <div class="tick" />
+            </div>
+
+            <div class="license-block"  v-if="ruleType >= 3">
+              <div class="license-block-imgDiv" style="position: relative">
+                <div class="title">当事人</div>
+                <img
+                  :src="`${imgOrigin}/${info.evidencePhoto}`"
+                  id="downloadImage3"
+                  alt
+                />
+              </div>
+              <div class="license-block-imgDiv" style="position: relative">
+                <div class="title">推荐/车主</div>
+                <img
+                  :src="`${imgOrigin}/${
+                    isAudit && ruleType >= 3
+                      ? selectedHaikang.facePhoto
+                      : info.facePhoto
+                  }`"
+                  id="downloadImage4"
+                  alt
+                />
+              </div>
+              <div class="license-block-tipDiv">
+                <div>
+                  身份证号：{{
+                    idCard(
+                      isAudit && ruleType >= 3
+                        ? selectedHaikang.license
+                        : info.license
+                    )
+                  }}
+                </div>
+                <div>
+                  相似度：{{
+                    isAudit && ruleType >= 3
+                      ? selectedHaikang.similarity
+                      : info.similarity
+                  }}
+                </div>
+              </div>
             </div>
           </div>
-          <div class="auditDialog-form">
-            <el-form ref="form2" :model="auditForm" label-width="90px">
-              <el-row>
-                <el-col :span="12">
-                  <el-form-item label="违法类型：">
-                    <el-select
-                      v-if="isAudit"
-                      v-model="auditForm.ruleType"
-                      placeholder="请选择"
-                      @change="auditRuleTypeChange"
-                    >
-                      <el-option
-                        v-for="item in ruleTypeOptions.operateOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                      />
-                    </el-select>
-                    <div v-else>{{ ruleTypeMap.get(info.ruleType) }}</div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="出行方式：">
-                    <el-select
-                      v-if="isAudit"
-                      v-model="auditForm.travelMode"
-                      placeholder="请选择"
-                      @change="auditTravelModeChange"
-                    >
-                      <el-option
-                        v-for="item in travelModeOptions.operateOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                      />
-                    </el-select>
-                    <div v-else>{{ travelModeMap.get(info.travelMode) }}</div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="采集时间：">{{
-                    info.ruleAt
-                  }}</el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="审核时间：">{{
-                    info.verifyedAt
-                  }}</el-form-item>
-                </el-col>
-              </el-row>
-              <el-row>
-                <el-col :span="12">
-                  <el-form-item label="姓名：">{{
+          <div class="audit-dialog-content-right">
+              <div class="license-block"  v-if="ruleType < 3">
+            
+              
+              <div class="license-block-imgDiv" style="position: relative">
+                <div class="title">当事人</div>
+                <img
+                  :src="`${imgOrigin}/${info.evidencePhoto}`"
+                  id="downloadImage3"
+                  alt
+                />
+              </div>
+              <div class="license-block-imgDiv" style="position: relative">
+                <div class="title">推荐/车主</div>
+                <img
+                  :src="`${imgOrigin}/${
                     isAudit && ruleType >= 3
-                      ? selectedHaikang.ruleName
-                      : info.ruleName
-                  }}</el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="车牌号：">
-                    <div v-if="isAudit" class="checkLicensePlate">
-                      <el-input
-                        v-model="auditForm.licensePlate"
-                        placeholder="请输入"
-                        maxlength="20"
-                        @input="auditLicensePlateChange"
-                      />
-                      <el-button
-                        v-if="ruleType < 3"
-                        class="checkLicensePlateBtn"
-                        type="primary"
-                        :loading="checkLicensePlateLoading"
-                        @click="handleCheckLicensePlate"
-                        >校验</el-button
+                      ? selectedHaikang.facePhoto
+                      : info.facePhoto
+                  }`"
+                  id="downloadImage4"
+                  alt
+                />
+              </div>
+              <div class="license-block-tipDiv">
+                <div>
+                  身份证号：{{
+                    idCard(
+                      isAudit && ruleType >= 3
+                        ? selectedHaikang.license
+                        : info.license
+                    )
+                  }}
+                </div>
+                <div>
+                  相似度：{{
+                    isAudit && ruleType >= 3
+                      ? selectedHaikang.similarity
+                      : info.similarity
+                  }}
+                </div>
+              </div>
+            </div>
+              <!--图3-->
+            <!-- <div v-if="ruleType < 3" class="evidence-block">
+            
+              <div class="evidence-block-imgDiv" style="position: relative">
+                
+                <img
+                  :src="`${imgOrigin}/${info.evidenceSmallPhoto}`"
+                  alt
+                  id="downloadImage2"
+                  @click="imgViewDialog_show2()"
+                />
+
+                <el-button
+                  type="primary"
+                  style="position: absolute; bottom: 1%; left: 70%"
+                  @click="downPic2(imgsrc)"
+                  >下载<i class="el-icon-download"></i
+                ></el-button>
+              </div>
+              <div class="evidence-block-imgDiv">
+                <video
+                  :src="`${imgOrigin}/${info.evidenceVedio}`"
+                  controls="controls"
+                >
+                  您的浏览器不支持。
+                </video>
+              </div>
+            </div> -->
+            <div
+              v-show="info.haikang && info.haikang.length > 0 && ruleType >= 3"
+              class="similarity-block"
+            >
+              <div
+                v-for="(item, index) in info.haikang"
+                :key="item.id"
+                :class="{
+                  'similarity-block-imgDiv': true,
+                  'similarity-block-imgDiv-selected':
+                    item.id === selectedHaikangKey,
+                }"
+                @click="handleSelectFaceImg(item.id)"
+              >
+                <img :src="`${imgOrigin}/${item.facePhoto}`" alt />
+                <div class="name">
+                  {{ item.ruleName }}
+                  <span>{{ item.similarity }}</span>
+                </div>
+                <div class="idCard">{{ idCard(item.license) }}</div>
+                <div class="index">{{ index + 1 }}</div>
+                <div class="tick" />
+              </div>
+            </div>
+            <div class="auditDialog-form">
+              <el-form ref="form2" :model="auditForm" label-width="90px">
+                <el-row>
+                  <el-col :span="12">
+                    <el-form-item label="违法类型：">
+                      <el-select
+                        v-if="isAudit"
+                        v-model="auditForm.ruleType"
+                        placeholder="请选择"
+                        @change="auditRuleTypeChange"
                       >
-                    </div>
-                    <div v-else>{{ info.licensePlate }}</div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="手机号：">{{
-                    isAudit && ruleType >= 3
-                      ? selectedHaikang.telephone
-                      : info.telephone
-                  }}</el-form-item>
-                </el-col>
-              </el-row>
-              <el-row>
-                <el-col :span="24">
-                  <el-form-item label="短信模板：">
-                    <el-input
-                      v-if="isAudit"
-                      v-model="auditForm.message"
-                      type="textarea"
-                      :rows="4"
-                      placeholder="请输入"
-                    />
-                    <div v-else style="line-height: 24px">
-                      {{ info.message }}
-                    </div>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </el-form>
+                        <el-option
+                          v-for="item in ruleTypeOptions.operateOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                      <div v-else>{{ ruleTypeMap.get(info.ruleType) }}</div>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="出行方式：">
+                      <el-select
+                        v-if="isAudit"
+                        v-model="auditForm.travelMode"
+                        placeholder="请选择"
+                        @change="auditTravelModeChange"
+                      >
+                        <el-option
+                          v-for="item in travelModeOptions.operateOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        />
+                      </el-select>
+                      <div v-else>{{ travelModeMap.get(info.travelMode) }}</div>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="采集时间：">{{
+                      info.ruleAt
+                    }}</el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="审核时间：">{{
+                      info.verifyedAt
+                    }}</el-form-item>
+                  </el-col>
+                </el-row>
+                <el-row>
+                  <el-col :span="12">
+                    <el-form-item label="姓名：">{{
+                      isAudit && ruleType >= 3
+                        ? selectedHaikang.ruleName
+                        : info.ruleName
+                    }}</el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="车牌号：">
+                      <div v-if="isAudit" class="checkLicensePlate">
+                        <el-input
+                          v-model="auditForm.licensePlate"
+                          placeholder="请输入"
+                          maxlength="20"
+                          @input="auditLicensePlateChange"
+                        />
+                        <el-button
+                          v-if="ruleType < 3"
+                          class="checkLicensePlateBtn"
+                          type="primary"
+                          :loading="checkLicensePlateLoading"
+                          @click="handleCheckLicensePlate"
+                          >校验</el-button
+                        >
+                      </div>
+                      <div v-else>{{ info.licensePlate }}</div>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="手机号：">{{
+                      isAudit && ruleType >= 3
+                        ? selectedHaikang.telephone
+                        : info.telephone
+                    }}</el-form-item>
+                  </el-col>
+                </el-row>
+                <el-row>
+                  <el-col :span="24">
+                    <el-form-item label="短信模板：">
+                      <el-input
+                        v-if="isAudit"
+                        v-model="auditForm.message"
+                        type="textarea"
+                        :rows="4"
+                        placeholder="请输入"
+                      />
+                      <div v-else style="line-height: 24px">
+                        {{ info.message }}
+                      </div>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </el-form>
+            </div>
           </div>
         </div>
-      </div>
-      <div v-if="isAudit" slot="footer" class="dialog-footer">
-        <el-button
-          type="primary"
-          :loading="confirmLoading"
-          @click="handleAuditOrInvaild(true)"
-          >审核</el-button
-        >
-        <el-button
-          :loading="confirmLoading"
-          @click="handleAuditOrInvaild(false)"
-          >作废</el-button
-        >
-        <el-button @click="handleCancel">取消</el-button>
+        <div v-if="isAudit" slot="footer" class="dialog-footer">
+          <el-button
+            type="primary"
+            :loading="confirmLoading"
+            @click="handleAuditOrInvaild(true)"
+            >审核</el-button
+          >
+          <el-button
+            :loading="confirmLoading"
+            @click="handleAuditOrInvaild(false)"
+            >作废</el-button
+          >
+          <el-button @click="handleCancel">取消</el-button>
+        </div>
       </div>
     </el-dialog>
   </div>
@@ -482,6 +517,7 @@ import elTableInfiniteScroll from "el-table-infinite-scroll";
 import moment from "moment";
 import axios from "@/utils/request";
 import { apiDomain } from "@/utils/config";
+
 export default {
   directives: {
     "el-table-infinite-scroll": elTableInfiniteScroll,
@@ -562,6 +598,9 @@ export default {
       statusOptions: [],
       imgViewDialogVisible: false, // 控制dialog显示隐藏
       imgViewDialog_imgSrc: "", // 控制图片src
+      miStatusColor: "info", // 查看按钮颜色
+      redType: false, // 闯红灯
+      dataType: false, // 载人,未戴头盔,逆行
     };
   },
   computed: {
@@ -712,23 +751,21 @@ export default {
 
       this.imgViewDialogVisible = true;
       this.imgViewDialog_imgSrc = document.getElementById("downloadImage").src;
-    },// 第一张图放大
+    }, // 第一张图放大
 
-
-  imgViewDialog_show1: function (src) {
+    imgViewDialog_show1: function (src) {
       console.log(document.getElementById("downloadImage1").src);
 
       this.imgViewDialogVisible = true;
       this.imgViewDialog_imgSrc = document.getElementById("downloadImage1").src;
-    },// 第二张图放大
+    }, // 第二张图放大
 
-
- imgViewDialog_show2: function (src) {
+    imgViewDialog_show2: function (src) {
       console.log(document.getElementById("downloadImage2").src);
 
       this.imgViewDialogVisible = true;
       this.imgViewDialog_imgSrc = document.getElementById("downloadImage2").src;
-    },// 第三张图放大
+    }, // 第三张图放大
 
     /**
      * 图片dialog_关闭
@@ -741,126 +778,119 @@ export default {
       }, 100);
     },
 
-        downPic(src) {
+    downPic(src) {
+      // console.log(src);
 
-          // console.log(src);
+      // console.log(document.getElementById("downloadImage").src);
+      src = document.getElementById("downloadImage").src;
+      let imgName = decodeURIComponent(src.substring(31));
+      var canvas = document.createElement("canvas");
+      var img = document.createElement("img");
+      img.onload = function (e) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, img.width, img.height);
+        canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+        canvas.toBlob((blob) => {
+          var link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.download = imgName;
+          link.click();
+        }, "image/jpeg");
+      };
+      img.crossOrigin = "Anonymous";
+      img.src = src;
+    }, // 下载图片
 
-          // console.log(document.getElementById("downloadImage").src);
-          src = document.getElementById("downloadImage").src;
-    let imgName = decodeURIComponent(src.substring(31))
-          var canvas = document.createElement("canvas");
-          var img = document.createElement("img");
-          img.onload = function (e) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var context = canvas.getContext("2d");
-            context.drawImage(img, 0, 0, img.width, img.height);
-            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
-            canvas.toBlob((blob) => {
-              var link = document.createElement("a");
-              link.href = window.URL.createObjectURL(blob);
-              link.download = imgName;
-              link.click();
-            }, "image/jpeg");
-          };
-          img.crossOrigin = "Anonymous";
-          img.src = src;
-        }, // 下载图片
+    downPic1(src) {
+      src = document.getElementById("downloadImage1").src;
+      let imgName = decodeURIComponent(src.substring(31));
+      var canvas = document.createElement("canvas");
+      var img = document.createElement("img");
+      img.onload = function (e) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, img.width, img.height);
+        canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+        canvas.toBlob((blob) => {
+          var link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.download = imgName;
+          link.click();
+        }, "image/jpeg");
+      };
+      img.crossOrigin = "Anonymous";
+      img.src = src;
+    }, // 下载图片1
 
-     downPic1(src) {
+    downPic2(src) {
+      src = document.getElementById("downloadImage2").src;
+      let imgName = decodeURIComponent(src.substring(31));
+      var canvas = document.createElement("canvas");
+      var img = document.createElement("img");
+      img.onload = function (e) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, img.width, img.height);
+        canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+        canvas.toBlob((blob) => {
+          var link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.download = imgName;
+          link.click();
+        }, "image/jpeg");
+      };
+      img.crossOrigin = "Anonymous";
+      img.src = src;
+    }, // 下载图片2
 
-          src = document.getElementById("downloadImage1").src;
-    let imgName = decodeURIComponent(src.substring(31))
-          var canvas = document.createElement("canvas");
-          var img = document.createElement("img");
-          img.onload = function (e) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var context = canvas.getContext("2d");
-            context.drawImage(img, 0, 0, img.width, img.height);
-            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
-            canvas.toBlob((blob) => {
-              var link = document.createElement("a");
-              link.href = window.URL.createObjectURL(blob);
-              link.download = imgName;
-              link.click();
-            }, "image/jpeg");
-          };
-          img.crossOrigin = "Anonymous";
-          img.src = src;
-        }, // 下载图片1
+    downPic3(src) {
+      src = document.getElementById("downloadImage3").src;
+      let imgName = decodeURIComponent(src.substring(31));
+      var canvas = document.createElement("canvas");
+      var img = document.createElement("img");
+      img.onload = function (e) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, img.width, img.height);
+        canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+        canvas.toBlob((blob) => {
+          var link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.download = imgName;
+          link.click();
+        }, "image/jpeg");
+      };
+      img.crossOrigin = "Anonymous";
+      img.src = src;
+    }, // 下载图片3
 
-     downPic2(src) {
-
-          src = document.getElementById("downloadImage2").src;
-    let imgName = decodeURIComponent(src.substring(31))
-          var canvas = document.createElement("canvas");
-          var img = document.createElement("img");
-          img.onload = function (e) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var context = canvas.getContext("2d");
-            context.drawImage(img, 0, 0, img.width, img.height);
-            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
-            canvas.toBlob((blob) => {
-              var link = document.createElement("a");
-              link.href = window.URL.createObjectURL(blob);
-              link.download = imgName;
-              link.click();
-            }, "image/jpeg");
-          };
-          img.crossOrigin = "Anonymous";
-          img.src = src;
-        }, // 下载图片2
-
-     downPic3(src) {
-
-          src = document.getElementById("downloadImage3").src;
-    let imgName = decodeURIComponent(src.substring(31))
-          var canvas = document.createElement("canvas");
-          var img = document.createElement("img");
-          img.onload = function (e) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var context = canvas.getContext("2d");
-            context.drawImage(img, 0, 0, img.width, img.height);
-            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
-            canvas.toBlob((blob) => {
-              var link = document.createElement("a");
-              link.href = window.URL.createObjectURL(blob);
-              link.download = imgName;
-              link.click();
-            }, "image/jpeg");
-          };
-          img.crossOrigin = "Anonymous";
-          img.src = src;
-        }, // 下载图片3
-
-     downPic4(src) {
-
-          src = document.getElementById("downloadImage4").src;
-    let imgName = decodeURIComponent(src.substring(31))
-          var canvas = document.createElement("canvas");
-          var img = document.createElement("img");
-          img.onload = function (e) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var context = canvas.getContext("2d");
-            context.drawImage(img, 0, 0, img.width, img.height);
-            canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
-            canvas.toBlob((blob) => {
-              var link = document.createElement("a");
-              link.href = window.URL.createObjectURL(blob);
-              link.download = imgName;
-              link.click();
-            }, "image/jpeg");
-          };
-          img.crossOrigin = "Anonymous";
-          img.src = src;
-        }, // 下载图片4
+    downPic4(src) {
+      src = document.getElementById("downloadImage4").src;
+      let imgName = decodeURIComponent(src.substring(31));
+      var canvas = document.createElement("canvas");
+      var img = document.createElement("img");
+      img.onload = function (e) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, img.width, img.height);
+        canvas.getContext("2d").drawImage(img, 0, 0, img.width, img.height);
+        canvas.toBlob((blob) => {
+          var link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.download = imgName;
+          link.click();
+        }, "image/jpeg");
+      };
+      img.crossOrigin = "Anonymous";
+      img.src = src;
+    }, // 下载图片4
     exportView() {
-      //  console.log(window.location.host) // 打印当前url+端口号
-
       if (this.form.ruleAt === undefined) {
         this.$message.error("请先选择采集时间");
         return;
@@ -876,11 +906,34 @@ export default {
           if (res.data.path === "") {
             this.$message.error(res.data.explain);
           } else {
-            self.location.href = "http://192.168.1.65:8083/" + res.data.path;
+            self.location.href = this.imgOrigin + "/" + res.data.path;
           }
         })
         .catch(() => {});
     }, // 导出视图
+
+    exportExecl() {
+      console.log("导出报表");
+      //   if (this.form.ruleAt === undefined) {
+      //   this.$message.error("请先选择采集时间");
+      //   return;
+      // }
+      // axios
+      //   .post("/api/download-path", {
+      //     startTime: this.form.ruleAt[0],
+      //     endTime: this.form.ruleAt[1],
+      //     info: String(this.form.ruleType),
+      //     type: "illegal_image",
+      //   })
+      //   .then((res) => {
+      //     if (res.data.path === "") {
+      //       this.$message.error(res.data.explain);
+      //     } else {
+      //       self.location.href = this.imgOrigin + "/" + res.data.path;
+      //     }
+      //   })
+      //   .catch(() => {});
+    }, // 导出报表
 
     idCard(text) {
       return text ? `******${String(text).substr(6, 8)}****` : "";
@@ -946,7 +999,6 @@ export default {
       }
     },
     closeCheckDialog() {
-    
       this.isFastCheck = false;
     },
     handleFastCheck() {
@@ -995,14 +1047,17 @@ export default {
       return `${name}，您于${time}在${address}驾驶${licensePlate}${travelMode}，被电子警察记录了${ruleType}的违法行为，请及时接受处理。`;
     },
     handleShowDialog(isAudit, id, ruleType) {
-
-// console.log(isAudit, id,ruleType)
-
-// if(isAudit === false &&  ruleType === 1){
-//   // console.log(document.getElementById('download'))
-//   // console.log(11111)
-// }
-
+      if (isAudit === true && ruleType === 1) {
+        this.redType = true;
+        // this.dataType = false;
+      } else if (isAudit === true && ruleType !== 1) {
+        // this.dataType = true;
+        // this.redType = false;
+        this.redType = true;
+      } else {
+        this.redType = true;
+        // this.dataType = false;
+      }
 
       this.tableLoading = true;
       this.selectedRowKey = id;
@@ -1240,12 +1295,13 @@ export default {
   .audit-dialog-content {
     display: flex;
     &-left {
+      // padding-top: 25px;
       flex: 0 0 580px;
       .evidence-block {
         display: flex;
         &-imgDiv {
           display: flex;
-          align-items: center;
+          // align-items: center;
           justify-content: center;
           flex: 1;
           height: 198px;
@@ -1301,8 +1357,31 @@ export default {
             height: 100%;
           }
         }
-        &-imgDiv:last-child {
-          background-color: #000;
+        // &-imgDiv:last-child {
+        //   // background-color: #000;
+        // }
+      }
+        .license-block {
+        display: flex;
+        &-imgDiv {
+          flex: 0 0 150px;
+          height: 226px;
+          .title {
+            padding-top: 10px;
+            color: #f00;
+            text-align: center;
+          }
+          img {
+            display: block;
+            width: 100%;
+            height: 200px;
+          }
+        }
+        &-tipDiv {
+          padding: 25px 0 0 5px;
+          div:first-child {
+            margin-bottom: 10px;
+          }
         }
       }
       .similarity-block {
@@ -1381,6 +1460,10 @@ export default {
         }
       }
     }
+  }
+  .dialog-footer {
+    position: relative;
+    left: 900px;
   }
 }
 </style>
